@@ -11,3 +11,12 @@ The three main inputs to the CookIt
 		- Each ingredient will be a PCB
 		- There will be a general PCB design for genertic “ingredient” with Pins
 		- Solder resistor onto PCB for each individual ingredient
+		- List of ingredients
+			- top bun (use digital pin to determine when connected
+			- bottom bun (permanently on plate)
+			- *lettuce*
+			- *cheese*
+			- *onion*
+			- *tomatoes*
+			- *patty*
+			* = need adc port
