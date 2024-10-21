@@ -1,0 +1,13 @@
+The three main inputs to the CookIt
+1) Chop It 
+	- 5 times?
+	- Physical implementation: will have 2 contacts on the table, and will use a metal knife to "chop" and complete the circuit
+
+2) Cook it
+	- Physical implementation: have to turn a dial (either rotarty encoder or potentiometer) to represent turning up heat
+
+3) Plate it
+	- Physical implementation: Have to put "ingredients on plate"
+		- Each ingredient will be a PCB
+		- There will be a general PCB design for genertic “ingredient” with Pins
+		- Solder resistor onto PCB for each individual ingredient
