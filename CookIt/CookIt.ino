@@ -1,9 +1,21 @@
-// Define Chop-It Inputs;
+// Welcome to Cook-It!
+
+// Define inputs.
+//Chop-It inputs.
 #define inputChopIt 5
 
-// Rotary Encoder Inputs
+// Cook-It inputs (rotary encoder)./
  #define inputCLK 0
  #define inputDT 7
+
+// Plate-It inputs (ADCS).
+int resPin0 = A0;
+int resPin1 = A1;
+int resPin2 = A2;
+int resPin3 = A3;
+int resPin4 = A4;
+int resPin5 = A5;
+
 
   // LED Outputs
  #define ledCW 8
@@ -19,10 +31,10 @@ typedef struct
      float expectVoltage;
 }ingredient;
 
-ingredient Burger  = {0, 1};
-ingredient Lettuce = {0, 1};
-ingredient Cheese  = {0, 1};
-ingredient Onion   = {0, 1};
+//ingredient Burger  = {0, 1};
+//ingredient Lettuce = {0, 1};
+//ingredient Cheese  = {0, 1};
+//ingredient Onion   = {0, 1};
 
 long randNumber; 
 
@@ -38,7 +50,7 @@ void setup() {
 
   pinMode(inputChopIt, INPUT_PULLUP);
 
-  randomSeed(analogRead(0));
+  randomSeed(millis());
 
   // Setup Serial Monitor
    Serial.begin (9600);
