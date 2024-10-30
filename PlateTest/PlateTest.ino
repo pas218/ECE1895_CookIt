@@ -1,12 +1,9 @@
 #include <Adafruit_NeoPixel.h>
-#include "mp3tf16p.h"
 #include "ADS1X15.h"
+#include "mp3tf16p.h"
 #ifdef __AVR__
  #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
-#endif
-// Welcome to Cook-It!
-
-// MP3 Player initializatin
+#endif // Done
 #define LED_PIN 0
 #define LED_PIN2 1
 #define LED_COUNT 8
@@ -14,7 +11,6 @@ Adafruit_NeoPixel strip_order = Adafruit_NeoPixel(LED_COUNT, LED_PIN, NEO_GRB + 
 Adafruit_NeoPixel strip_player = Adafruit_NeoPixel(LED_COUNT, LED_PIN2, NEO_GRB + NEO_KHZ800);
 ADS1115 ADS(0x48);
 
-// Neo-pixel initializaiton.
 uint32_t BunRGB = strip_order.Color(255,50,0);
 uint32_t PattyRGB = strip_order.Color(255,255,255);
 uint32_t LettuceRGB = strip_order.Color(30,255,0);
@@ -52,166 +48,29 @@ int ing = 0;
 bool winFlag = 1;
 int len;
 
+MP3Player mp3(10,11);
 
-// Define inputs.
-//Chop-It inputs.
-#define inputChopIt 5
-
-// Cook-It inputs (rotary encoder)./
- #define inputCLK 8
- #define inputDT 7
- #define cookItButton 6
-
-
-
-// Cook-It Initializations
- int counter = 0; 
- int currentStateDT;
- int previousStateDT; 
-
- MP3Player mp3(10,11);
-
-typedef struct
-{
-     int analogInputNumber;
-     float expectVoltage;
-}ingredient;
-
-
-long randNumber; 
-
+// the setup function runs once when you press reset or power the board
 void setup() {
-
-  mp3.initialize();
-
-  #if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
-  clock_prescale_set(clock_div_1);
-  #endif
-
-  // Initialize Plate-It NeoPixels
-  strip_order.begin();
-  strip_order.show(); // Initialize all pixels to 'off'
-  strip_order.setBrightness(50);
-  strip_player.begin();
-  strip_player.show(); // Initialize all pixels to 'off'
-  strip_player.setBrightness(50);
-
-  pinMode(2, INPUT);
-  pinMode(3, INPUT);
-  pinMode(4, INPUT);
-
-  ADS.begin();
-  ADS.setGain(0);
-
-  // Set encoder pins as inputs  
-  pinMode (inputCLK,INPUT);
-  pinMode (inputDT,INPUT);
-
-  // Read the initial state of inputCLK
-  // Assign to previousStateCLK variable
-  previousStateDT = digitalRead(inputDT);
-
-  pinMode(inputChopIt, INPUT_PULLUP);
-  pinMode(cookItButton, INPUT_PULLUP);
-
-  randomSeed(millis());
-
-  // Setup Serial Monitor
+ mp3.initialize();
+ #if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
+ clock_prescale_set(clock_div_1);
+ #endif
+ strip_order.begin();
+ strip_order.show(); // Initialize all pixels to 'off'
+ strip_order.setBrightness(50);
+ strip_player.begin();
+ strip_player.show(); // Initialize all pixels to 'off'
+ strip_player.setBrightness(50);
+ pinMode(2, INPUT);
+ pinMode(3, INPUT);
+ pinMode(4, INPUT);
+ ADS.begin();
+ ADS.setGain(0);
 }
 
-void loop() {
-  
-  delay(500);
-
-  randNumber = random(0, 2);
-  // Chop it
-  if (randNumber == 0){
-    mp3.playTrackNumber(3, 25);
-    chopIt();
-  }
-  // Cook it
-  else if (randNumber == 1){
-    mp3.playTrackNumber(1, 25);
-    cookIt();
-  }
-  else{
-    Serial.print("Plate-It");
-    Serial.println();
-    plateIt();
-  }
-}
-
-void chopIt() {
-
-  // Define the sensor value.
-  int sensorVal;
-  
-  // Number of Chops needed.
-  int countChops = 0;
-
-  while(countChops < 4){
-    // Read the value of the digital input associated with Chop-It.
-    sensorVal = digitalRead(inputChopIt);
-
-    // If the digital input is low (meaning the knife has been used to complete the circuit),
-    // turn off the LED to signify that the input has been read and break from the infinite loop.
-    if (sensorVal == LOW){
-      countChops++;
-      delay(750);
-    }
-  }
-
-}
-
-void cookIt(){
-
-  // Define the button value.
-  int buttonVal;
-  bool continueToTurn = 0;
-
-  while(continueToTurn == 0){
-    buttonVal = digitalRead(cookItButton);
-    if(buttonVal == LOW){
-      continueToTurn = 1;
-    }
-  }
-    
-  while(continueToTurn == 1){
-
-    
-    
-    //Serial.print("Inside.");
-    //Serial.println();
-    //break;
-
-    
-
-    // Read the current state of inputCLK
-    currentStateDT = digitalRead(inputDT);
-
-    // If the previous and the current state of the inputCLK are different then a pulse has occured
-    if (currentStateDT != previousStateDT){ 
-          
-        
-        // If the inputDT state is same as the inputCLK state then 
-        // the encoder is rotating counterclockwise
-        if (digitalRead(inputCLK) == currentStateDT) { 
-          counter++;
-        }
-      } 
-      // Update previousStateCLK with the current state
-      previousStateDT = currentStateDT;
-
-      if(counter > 3){
-          continueToTurn = 0;
-      }
-    }
-
-    // Reset the counter for the
-    counter = 0;
-}
-
-void plateIt()
+// the loop function runs over and over again forever
+void loop()
 {
  bool roundStarts = true;
  while (roundStarts)
@@ -620,6 +479,7 @@ void plateIt()
  strip_player.show();
  delay(1000);
 }
+
 
 int arraySize(int arr[], int arrSize)
 {
