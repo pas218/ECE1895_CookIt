@@ -23,27 +23,27 @@ uint32_t CheeseRGB = strip_order.Color(255,200,0);
 uint32_t TomatoRGB = strip_order.Color(255,0,0);
 uint32_t BlankRGB = strip_order.Color(0,0,0);
 
-int resPin0 = A0;
-int resPin1 = A1;
-int resPin2 = A2;
-int resPin3 = A3;
+int resPin0 = A0;//
+int resPin1 = A1;//
+int resPin2 = A2;//
+int resPin3 = A3;//
 
 
-int Patty = 0;
-int Cheese = 0;
-int Tomato = 0;
-int Onions = 0;
-int Lettuce = 0;
-int BottomBun = 0;
-int TopBun = 0;
+int Patty = 0;//
+int Cheese = 0;//
+int Tomato = 0;//
+int Onions = 0;//
+int Lettuce = 0;//
+int BottomBun = 0;//
+int TopBun = 0;//
 
-int pattyCount = 0;
-int cheeseCount = 0;
-int tomatoCount = 0;
-int onionCount = 0;
-int lettuceCount = 0;
-int bottomBunCount = 0;
-int topBunCount = 0;
+int pattyCount = 0;//
+int cheeseCount = 0;//
+int tomatoCount = 0;//
+int onionCount = 0;//
+int lettuceCount = 0;//
+int bottomBunCount = 0;//
+int topBunCount = 0;//
 
 int order[] = {5, 0, 1, 4, 3, 2, 6};
 // BottomBun, Patty, Cheese, Lettuce, Onion, TopBun
