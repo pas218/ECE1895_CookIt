@@ -1,57 +1,10 @@
-
+#include "ADS1X15.h"
 #include "mp3tf16p.h"
 #include "plateIt.h"
 #ifdef __AVR__
  #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
 #endif
 // Welcome to Cook-It!
-
-// MP3 Player initializatin
-#define LED_PIN 0 //
-#define LED_PIN2 1//
-#define LED_COUNT 8//
-Adafruit_NeoPixel strip_order = Adafruit_NeoPixel(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);//
-Adafruit_NeoPixel strip_player = Adafruit_NeoPixel(LED_COUNT, LED_PIN2, NEO_GRB + NEO_KHZ800);//
-ADS1115 ADS(0x48); //
-
-// Neo-pixel initializaiton.
-uint32_t BunRGB = strip_order.Color(255,50,0);
-uint32_t PattyRGB = strip_order.Color(255,255,255);
-uint32_t LettuceRGB = strip_order.Color(30,255,0);
-uint32_t OnionRGB = strip_order.Color(200,0,255);
-uint32_t CheeseRGB = strip_order.Color(255,200,0);
-uint32_t TomatoRGB = strip_order.Color(255,0,0);
-uint32_t BlankRGB = strip_order.Color(0,0,0);
-
-
-int resPin0 = A0;//
-int resPin1 = A1;//
-int resPin2 = A2;//
-int resPin3 = A3;//
-
-
-int Patty = 0;//
-int Cheese = 0;//
-int Tomato = 0;//
-int Onions = 0;//
-int Lettuce = 0;//
-int BottomBun = 0;//
-int TopBun = 0;//
-
-int pattyCount = 0;//
-int cheeseCount = 0;//
-int tomatoCount = 0;//
-int onionCount = 0;//
-int lettuceCount = 0;//
-int bottomBunCount = 0;//
-int topBunCount = 0;//
-
-int order[] = {5, 0, 1, 4, 3, 2, 6};
-// BottomBun, Patty, Cheese, Lettuce, Onion, TopBun
-int playerOrder[10] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
-int ing = 0;
-bool winFlag = 1;
-int len;
 
 
 ///// Digital Pin assignments /////
@@ -79,14 +32,9 @@ int len;
 
  MP3Player mp3(10,11);
 
-typedef struct
-{
-     int analogInputNumber;
-     float expectVoltage;
-}ingredient;
-
-
 long randNumber; 
+
+PlateIt plateItInstance = PlateIt(plateItBottomBun, plateItTopBun, plateItBell, plateItNeoPixelLED0, plateItNeoPixelLED1, plateItNeoPixelLEDCount);
 
 void setup() {
 
@@ -96,20 +44,9 @@ void setup() {
   clock_prescale_set(clock_div_1);
   #endif
 
-  // Initialize Plate-It NeoPixels
-  strip_order.begin();
-  strip_order.show(); // Initialize all pixels to 'off'
-  strip_order.setBrightness(50);
-  strip_player.begin();
-  strip_player.show(); // Initialize all pixels to 'off'
-  strip_player.setBrightness(50);
-
   pinMode(plateItBottomBun, INPUT);
   pinMode(plateItTopBun, INPUT);
   pinMode(plateItBell, INPUT);
-
-  ADS.begin();
-  ADS.setGain(0);
 
   // Set encoder pins as inputs  
   pinMode (cookItEncoderClk,INPUT);
@@ -123,17 +60,36 @@ void setup() {
   pinMode(cookItButton, INPUT_PULLUP);
 
   randomSeed(millis());
-
+  plateItInstance.initialize();
   
 }
 
 void loop() {
   
-  delay(500);
+ 
 
-  randNumber = random(0, 3);
+  delay(1000);
+
+  int returnNumber = 0;
+  //randNumber = random(0, 3);
+  randNumber = 7;
+  mp3.playTrackNumber(3, 25);
+
+
+  if (randNumber == 7)
+  {
+    while(true)
+    {
+      returnNumber = plateItInstance.plateItTestOne();
+      if (returnNumber == 1)
+      {
+        break;
+      }
+    }
+  }
+  /*
   // Chop it
-  if (randNumber == 0){
+  else if (randNumber == 0){
     mp3.playTrackNumber(3, 25);
     chopIt();
   }
@@ -145,6 +101,7 @@ void loop() {
   else{
     plateIt();
   }
+  */
 }
 
 void chopIt() {
@@ -216,7 +173,7 @@ void cookIt(){
     // Reset the counter for the
     counter = 0;
 }
-
+/*
 void plateIt()
 {
  bool roundStarts = true;
@@ -684,4 +641,4 @@ void orderDisplay(int arr[], int len)
  }
  delay(1000);
  }
-}
+}*/

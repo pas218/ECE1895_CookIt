@@ -1,15 +1,19 @@
 // plateIt Class
 #include <Adafruit_NeoPixel.h>
 #include "ADS1X15.h"
+#ifdef __AVR__
+ #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
+#endif // Done
 
 class PlateIt
 {
 private:
 
-  ADS1115 ADS(0x48);
 
-  Adafruit_NeoPixel strip_order;
-  Adafruit_NeoPixel strip_player;
+//strip_order = Adafruit_NeoPixel(neoPixelLEDCount, neoPixelLED0, NEO_GRB + NEO_KHZ800);
+  //strip_player = Adafruit_NeoPixel(neoPixelLEDCount, neoPixelLED1, NEO_GRB + NEO_KHZ800);
+  Adafruit_NeoPixel strip_order = Adafruit_NeoPixel(8, 0, NEO_GRB + NEO_KHZ800);
+  Adafruit_NeoPixel strip_player = Adafruit_NeoPixel(8, 1, NEO_GRB + NEO_KHZ800);
 
   uint32_t BunRGB;
   uint32_t PattyRGB ;
@@ -44,29 +48,33 @@ private:
   int bottomBunInput;
   int bellInput;
 
-  int order[7] = {5, 0, 1, 4, 3, 2, 6};
+  int order[7];
   //BottomBun, Patty, Cheese, Lettuce, Onion, TopBun
-  int playerOrder[10] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
-  int ing = 0;
-  bool winFlag = 1;
+  int playerOrder[10];
+  int ing;
+  bool winFlag;
   int len;
+
+  bool checkPatty();
+  bool checkCheese();
+  bool checkTomato();
+  bool checkOnion();
+  bool checkLettuce();
+  bool checkTopBun();
+  bool checkBottomBun();
 
 public:
     PlateIt(int plateItBottomBun, int plateItTopBun, int plateItBell, int neoPixelLED0, int neoPixelLED1, int neoPixelLEDCount);
-    ~PlateIt();
-    void plateItNormal();
-    bool checkPatty();
-    bool checkCheese();
-    bool checkTomato();
-    bool checkOnion();
-    bool checkLettuce();
+    void initialize();
+    int plateItNormal();
+    int plateItTestOne();
+    void orderDisplay(int arr[], int len);
+    int arraySize(int arr[], int arrSize);
 };
 
 PlateIt::PlateIt(int plateItBottomBun, int plateItTopBun, int plateItBell, int neoPixelLED0, int neoPixelLED1, int neoPixelLEDCount)
 {
 
-  strip_order = Adafruit_NeoPixel(neoPixelLEDCount, neoPixelLED0, NEO_GRB + NEO_KHZ800);
-  strip_player = Adafruit_NeoPixel(neoPixelLEDCount, neoPixelLED1, NEO_GRB + NEO_KHZ800);
 
   BunRGB = strip_order.Color(255,50,0);
   PattyRGB = strip_order.Color(255,255,255);
@@ -100,32 +108,94 @@ PlateIt::PlateIt(int plateItBottomBun, int plateItTopBun, int plateItBell, int n
   bottomBunInput = plateItBottomBun;
   topBunInput = plateItTopBun;
   bellInput = plateItBell;
+
+
+  
+  order[0] = 5;
+  order[1] = 2;
+  order[2] = 6;
+
+  ing = 0;
+  winFlag = 1;
+  len = 3;
+
+
+  for(int i = 0; i < 10; i++)
+  {
+    playerOrder[i] = -1;
+  }
+
+  //ADS1115 ADS(0x48);
 }
 
-void::plateItNormal()
+void PlateIt::initialize()
 {
-  while(true)
+   // Initialize Plate-It NeoPixels
+  strip_order.begin();
+  for (int i = 0; i < 8; i++)
   {
-    if (checkPatty() == 1){
-      break;
-    }
-    else if(checkCheese() == 1)
-    {
-      break;
-    }
-    else if(checkTomato() == 1)
-    {
-      break;
-    }
-    else if(checkOnion() == 1)
-    {
-      break;
-    }
-    else if(checkLettuce() == 1)
-    {
+    strip_order.Color(0,0,0);
+  }
+  strip_order.show(); // Initialize all pixels to 'off'
+  strip_order.setBrightness(50);
+  strip_player.begin();
+  for (int i = 0; i < 8; i++)
+  {
+    strip_player.Color(0,0,0);
+  }
+  strip_player.show(); // Initialize all pixels to 'off'
+  strip_player.setBrightness(50);
+  orderDisplay(order, len);
+}
+
+int PlateIt::plateItTestOne()
+{
+  bool checker;
+  while(true){
+    checker = checkPatty();
+    if (checker == 1){
       break;
     }
   }
+
+  return 1;
+}
+
+int PlateIt::plateItNormal()
+{
+  bool checker;
+  while(true)
+  {
+    checker = checkPatty();
+    if (checker == 1){
+      break;
+    }
+    checker = checkCheese();
+    if (checker == 1){
+      break;
+    }
+    checker = checkTomato();
+    if (checker == 1){
+      break;
+    }
+    checker = checkOnion();
+    if (checker == 1){
+      break;
+    }
+    checker = checkTopBun();
+    if (checker == 1){
+      break;
+    }
+    checker = checkBottomBun();
+    if (checker == 1){
+      break;
+    }
+    /*else if(checkLettuce() == 1)
+    {
+      break;
+    }*/
+  }
+  return 1;
 }
  bool PlateIt::checkPatty(){
 
@@ -156,12 +226,12 @@ void::plateItNormal()
     playerOrder[ing] = -1;
     strip_player.setPixelColor(ing, BlankRGB);
     strip_player.show();
-    readInput = 1
+    readInput = 1;
   }
 
   return readInput;
 }
-
+/*
 bool PlateIt::checkCheese()
 {
   bool readInput = 0;
@@ -269,7 +339,8 @@ bool PlateIt::checkOnion()
 
   return readInput;
 }
-
+*/
+/*
 bool PlateIt::checkLettuce()
 {
   bool readInput = 0;
@@ -304,4 +375,110 @@ bool PlateIt::checkLettuce()
   }
 
   return readInput;
+}
+*/
+/*
+bool PlateIt::checkBottomBun()
+{
+  // BottomBun
+  BottomBun = digitalRead(bottomBunInput);
+  if (BottomBun == HIGH && bottomBunCount == 0)
+  {
+    playerOrder[ing] = 5;
+    strip_player.setPixelColor(ing, BunRGB);
+    strip_player.show();
+    ing++;
+    bottomBunCount++;
+  }
+  else if(BottomBun == LOW && bottomBunCount != 0)
+  {
+    ing--;
+    bottomBunCount--;
+    playerOrder[ing] = -1;
+    strip_player.setPixelColor(ing, BlankRGB);
+    strip_player.show();
+  }
+}
+*/
+/*
+bool PlateIt::checkTopBun()
+{
+  // TopBun
+  TopBun = digitalRead(topBunInput);
+  if (TopBun == HIGH && topBunCount == 0)
+  {
+    playerOrder[ing] = 6;
+    strip_player.setPixelColor(ing, BunRGB);
+    strip_player.show();
+    ing++;
+    topBunCount++;
+  }
+  else if(TopBun == LOW && topBunCount != 0)
+  {
+    ing--;
+    topBunCount--;
+    playerOrder[ing] = -1;
+    strip_player.setPixelColor(ing, BlankRGB);
+    strip_player.show();
+  }
+}
+*/
+
+void PlateIt::orderDisplay(int arr[], int len)
+{
+ for (int i=0; i<len; i++)
+ {
+ int ing = arr[i];
+ switch (ing)
+ {
+ // Patty
+ case 0:
+ strip_order.setPixelColor(i, PattyRGB);
+ strip_order.show();
+ break;
+
+ // Cheese
+ case 1:
+ strip_order.setPixelColor(i, CheeseRGB);
+ strip_order.show();
+ break;
+
+ // Tomato
+ case 2:
+ strip_order.setPixelColor(i, TomatoRGB);
+ strip_order.show();
+ break;
+
+ // Onion
+ case 3:
+ strip_order.setPixelColor(i, OnionRGB);
+ strip_order.show();
+ break;
+
+ // Lettuce
+ case 4:
+ strip_order.setPixelColor(i, LettuceRGB);
+ strip_order.show();
+ break;
+
+ // BottomBun
+ case 5:
+ strip_order.setPixelColor(i, BunRGB);
+ strip_order.show();
+ break;
+
+ // TopBun
+ case 6:
+ strip_order.setPixelColor(i, BunRGB);
+ strip_order.show();
+ break;
+ }
+ delay(1000);
+ }
+}
+
+int PlateIt::arraySize(int arr[], int arrSize)
+{
+ int len = arrSize / sizeof(arr[0]);
+ return len;
 }
