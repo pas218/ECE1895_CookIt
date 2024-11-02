@@ -9,7 +9,7 @@ class PlateIt
 {
 private:
 
-
+  ADS1115 ADS = ADS1115(0x48);
 //strip_order = Adafruit_NeoPixel(neoPixelLEDCount, neoPixelLED0, NEO_GRB + NEO_KHZ800);
   //strip_player = Adafruit_NeoPixel(neoPixelLEDCount, neoPixelLED1, NEO_GRB + NEO_KHZ800);
   Adafruit_NeoPixel strip_order = Adafruit_NeoPixel(8, 0, NEO_GRB + NEO_KHZ800);
@@ -35,6 +35,7 @@ private:
   int Lettuce;
   int BottomBun;
   int TopBun;
+  int Bell;
 
   int pattyCount;
   int cheeseCount;
@@ -62,6 +63,7 @@ private:
   bool checkLettuce();
   bool checkTopBun();
   bool checkBottomBun();
+  bool checkBell();
 
 public:
     PlateIt(int plateItBottomBun, int plateItTopBun, int plateItBell, int neoPixelLED0, int neoPixelLED1, int neoPixelLEDCount);
@@ -109,15 +111,18 @@ PlateIt::PlateIt(int plateItBottomBun, int plateItTopBun, int plateItBell, int n
   topBunInput = plateItTopBun;
   bellInput = plateItBell;
 
-
   
   order[0] = 5;
-  order[1] = 2;
-  order[2] = 6;
+  order[1] = 0;
+  order[2] = 1;
+  order[3] = 4;
+  order[4] = 3;
+  order[5] = 2;
+  order[6] = 6;
 
   ing = 0;
   winFlag = 1;
-  len = 3;
+  len = 7;
 
 
   for(int i = 0; i < 10; i++)
@@ -146,6 +151,9 @@ void PlateIt::initialize()
   strip_player.show(); // Initialize all pixels to 'off'
   strip_player.setBrightness(50);
   orderDisplay(order, len);
+
+  ADS.begin();
+  ADS.setGain(0);
 }
 
 int PlateIt::plateItTestOne()
@@ -163,39 +171,54 @@ int PlateIt::plateItTestOne()
 
 int PlateIt::plateItNormal()
 {
+  int returnVal = 0;
   bool checker;
   while(true)
   {
     checker = checkPatty();
     if (checker == 1){
+      returnVal = 1;
       break;
     }
     checker = checkCheese();
     if (checker == 1){
+      returnVal = 1;
       break;
     }
     checker = checkTomato();
     if (checker == 1){
+      returnVal = 1;
       break;
     }
     checker = checkOnion();
     if (checker == 1){
+      returnVal = 1;
       break;
     }
     checker = checkTopBun();
     if (checker == 1){
+      returnVal = 1;
       break;
     }
     checker = checkBottomBun();
     if (checker == 1){
+      returnVal = 1;
       break;
     }
-    /*else if(checkLettuce() == 1)
+    checker = checkLettuce();
+    if(checker == 1)
     {
+      returnVal = 1;
       break;
-    }*/
+    }
+    checker = checkBell();
+    if(checker == 1)
+    {
+      returnVal = 2;
+      break;
+    }
   }
-  return 1;
+  return returnVal;
 }
  bool PlateIt::checkPatty(){
 
@@ -231,7 +254,7 @@ int PlateIt::plateItNormal()
 
   return readInput;
 }
-/*
+
 bool PlateIt::checkCheese()
 {
   bool readInput = 0;
@@ -306,7 +329,7 @@ bool PlateIt::checkTomato()
 
 bool PlateIt::checkOnion()
 {
-  bool readInput;
+  bool readInput = 0;
   // Onions
   Onions = analogRead(resPin3);
   if (Onions >=400 && Onions <525 && onionCount == 0)
@@ -339,8 +362,8 @@ bool PlateIt::checkOnion()
 
   return readInput;
 }
-*/
-/*
+
+
 bool PlateIt::checkLettuce()
 {
   bool readInput = 0;
@@ -376,11 +399,12 @@ bool PlateIt::checkLettuce()
 
   return readInput;
 }
-*/
-/*
+
+
 bool PlateIt::checkBottomBun()
 {
   // BottomBun
+  int readInput = 0;
   BottomBun = digitalRead(bottomBunInput);
   if (BottomBun == HIGH && bottomBunCount == 0)
   {
@@ -389,6 +413,7 @@ bool PlateIt::checkBottomBun()
     strip_player.show();
     ing++;
     bottomBunCount++;
+    readInput = 1;
   }
   else if(BottomBun == LOW && bottomBunCount != 0)
   {
@@ -397,13 +422,17 @@ bool PlateIt::checkBottomBun()
     playerOrder[ing] = -1;
     strip_player.setPixelColor(ing, BlankRGB);
     strip_player.show();
+    readInput = 1;
   }
+
+  return readInput;
 }
-*/
-/*
+
+
 bool PlateIt::checkTopBun()
 {
   // TopBun
+  int readInput = 0;
   TopBun = digitalRead(topBunInput);
   if (TopBun == HIGH && topBunCount == 0)
   {
@@ -412,6 +441,7 @@ bool PlateIt::checkTopBun()
     strip_player.show();
     ing++;
     topBunCount++;
+    readInput = 1;
   }
   else if(TopBun == LOW && topBunCount != 0)
   {
@@ -420,9 +450,23 @@ bool PlateIt::checkTopBun()
     playerOrder[ing] = -1;
     strip_player.setPixelColor(ing, BlankRGB);
     strip_player.show();
+    readInput = 1;
   }
+  return readInput;
 }
-*/
+
+bool PlateIt::checkBell()
+{
+  // Bell
+  int readInput = 0;
+  Bell = digitalRead(bellInput);
+  if (Bell == HIGH)
+  {
+    readInput = 1;
+  }
+  return readInput;
+}
+
 
 void PlateIt::orderDisplay(int arr[], int len)
 {

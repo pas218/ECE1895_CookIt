@@ -66,42 +66,43 @@ void setup() {
 
 void loop() {
   
- 
+ int returnNumber;
+mp3.playTrackNumber(3, 20);
+while(true)
+{
+  delay(2000);
 
-  delay(1000);
-
-  int returnNumber = 0;
-  //randNumber = random(0, 3);
-  randNumber = 7;
-  mp3.playTrackNumber(3, 25);
-
-
-  if (randNumber == 7)
-  {
-    while(true)
-    {
-      returnNumber = plateItInstance.plateItTestOne();
-      if (returnNumber == 1)
-      {
-        break;
-      }
-    }
-  }
-  /*
+  
+  randNumber = random(0, 4);
+  
   // Chop it
-  else if (randNumber == 0){
-    mp3.playTrackNumber(3, 25);
+  if (randNumber == 0){
+    mp3.playTrackNumber(5, 20);
     chopIt();
+    mp3.playTrackNumber(8, 20);
   }
   // Cook it
   else if (randNumber == 1){
-    mp3.playTrackNumber(1, 25);
+    mp3.playTrackNumber(6, 20);
     cookIt();
+    mp3.playTrackNumber(8, 20);
   }
   else{
-    plateIt();
+    mp3.playTrackNumber(7, 20);
+    returnNumber = plateItInstance.plateItNormal();
+    if (returnNumber == 1)
+    {
+      mp3.playTrackNumber(8, 20);
+    }
+    else if (returnNumber == 2)
+    {
+      mp3.playTrackNumber(1, 20);
+    }
+    
   }
-  */
+
+}
+  
 }
 
 void chopIt() {
