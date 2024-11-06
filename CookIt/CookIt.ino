@@ -58,7 +58,7 @@ void setup() {
   pinMode (cookItEncoderClk,INPUT);
   pinMode (cookItEncoderDT,INPUT);
 
-  pinMode(chopItInput, INPUT_PULLUP);
+  pinMode(5, INPUT_PULLUP);
   pinMode(cookItButton, INPUT_PULLUP);
 
   randomSeed(millis());
@@ -75,12 +75,15 @@ void loop() {
   {
     delay(2000);
 
-    randNumber = random(0, 4);
+    //randNumber = random(0, 4);
+    randNumber = 0;
     
     // Chop it
     if (randNumber == 0){
       mp3.playTrackNumber(5, 20);
+      delay(100);
       chopItInstance.runChopIt();
+      //chopItInstance.resetChopIt();
       mp3.playTrackNumber(8, 20);
     }
     // Cook it
@@ -102,11 +105,8 @@ void loop() {
       else if (returnNumber == 2)
       {
         mp3.playTrackNumber(1, 20);
-      }
-      
+      } 
     }
-
   }
-  
 }
 
