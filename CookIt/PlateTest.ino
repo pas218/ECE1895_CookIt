@@ -1,15 +1,29 @@
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SH110X.h>
 #include <Adafruit_NeoPixel.h>
 #include "ADS1X15.h"
 #include "mp3tf16p.h"
+#define i2c_Address 0x3c
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+
 #ifdef __AVR__
  #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
 #endif
-#define LED_PIN 0
+
+#define LED_PIN 2
 #define LED_PIN2 1
 #define LED_COUNT 8
 Adafruit_NeoPixel strip_order = Adafruit_NeoPixel(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
-Adafruit_NeoPixel strip_player = Adafruit_NeoPixel(LED_COUNT, LED_PIN2, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip_player = Adafruit_NeoPixel(LED_COUNT, LED_PIN2, NEO_GRBW + NEO_KHZ800);
 ADS1115 ADS(0x48);
+
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+
+// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
+Adafruit_SH1106G display = Adafruit_SH1106G(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
 uint32_t BunRGB = strip_order.Color(255,50,0);
 uint32_t PattyRGB = strip_order.Color(255,255,255);
@@ -52,21 +66,38 @@ MP3Player mp3(10,11);
 
 // the setup function runs once when you press reset or power the board
 void setup() {
- mp3.initialize();
- #if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
- clock_prescale_set(clock_div_1);
- #endif
- strip_order.begin();
- strip_order.show(); // Initialize all pixels to 'off'
- strip_order.setBrightness(50);
- strip_player.begin();
- strip_player.show(); // Initialize all pixels to 'off'
- strip_player.setBrightness(50);
- pinMode(2, INPUT);
- pinMode(3, INPUT);
- pinMode(4, INPUT);
- ADS.begin();
- ADS.setGain(0);
+  delay(250);
+  display.begin(i2c_Address, true); // Address 0x3C default
+  display.display();
+  delay(2000);
+   // Bottom Bun
+  pinMode(3, INPUT);
+  // Top Bun
+  pinMode(4, INPUT);
+  pinMode(12, INPUT);
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SH110X_WHITE);
+  display.setCursor(0, 10);
+  display.println("GAME NOW");
+  display.display(); 
+  delay(3000);
+  display.clearDisplay();
+  display.display();
+  ADS.begin();
+  ADS.setGain(0);
+
+
+  mp3.initialize();
+  #if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
+  clock_prescale_set(clock_div_1);
+  #endif
+  strip_order.begin();
+  strip_order.show(); // Initialize all pixels to 'off'
+  strip_order.setBrightness(50);
+  strip_player.begin();
+  strip_player.show(); // Initialize all pixels to 'off'
+  strip_player.setBrightness(50);
 }
 
 // the loop function runs over and over again forever
@@ -83,7 +114,7 @@ void loop()
  mp3.playTrackNumber(3, 25);
 
  // End Once Bell is Pressed
- while(digitalRead(4) == LOW)
+ while(digitalRead(12) == HIGH)
  {
  // Patty
  Patty = analogRead(resPin0);
@@ -94,6 +125,11 @@ void loop()
  strip_player.show();
  ing++;
  pattyCount++;
+ display.clearDisplay();
+ display.display();
+ display.setCursor(0, 15);
+ display.print("Patty");
+ display.display();
  }
  else if (Patty >= 200 && Patty <350 && pattyCount == 1)
  {
@@ -110,6 +146,11 @@ void loop()
  playerOrder[ing] = -1;
  strip_player.setPixelColor(ing, BlankRGB);
  strip_player.show();
+ display.clearDisplay();
+ display.display();
+ display.setCursor(0, 15);
+ display.print("Patty Removed");
+ display.display();
  }
 
  // Cheese
@@ -121,6 +162,11 @@ void loop()
  strip_player.show();
  ing++;
  cheeseCount++;
+ display.clearDisplay();
+ display.display();
+ display.setCursor(0, 15);
+ display.print("Cheese");
+ display.display();
  }
  else if (Cheese >= 200 && Cheese <350 && cheeseCount == 1)
  {
@@ -137,6 +183,11 @@ void loop()
  playerOrder[ing] = -1;
  strip_player.setPixelColor(ing, BlankRGB);
  strip_player.show();
+ display.clearDisplay();
+ display.display();
+ display.setCursor(0, 15);
+ display.print("Cheese Removed");
+ display.display();
  }
 
  // Tomato
@@ -148,6 +199,11 @@ void loop()
  strip_player.show();
  ing++;
  tomatoCount++;
+ display.clearDisplay();
+ display.display();
+ display.setCursor(0, 15);
+ display.print("Tomato");
+ display.display();
  }
  else if (Tomato >= 200 && Tomato <350 && tomatoCount == 1)
  {
@@ -164,6 +220,11 @@ void loop()
  playerOrder[ing] = -1;
  strip_player.setPixelColor(ing, BlankRGB);
  strip_player.show();
+ display.clearDisplay();
+ display.display();
+ display.setCursor(0, 15);
+ display.print("Tomato Remove");
+ display.display();
  }
 
  // Onions
@@ -175,6 +236,11 @@ void loop()
  strip_player.show();
  ing++;
  onionCount++;
+ display.clearDisplay();
+ display.display();
+ display.setCursor(0, 15);
+ display.print("Onion");
+ display.display();
  }
  else if (Onions >= 200 && Onions <350 && onionCount == 1)
  {
@@ -191,17 +257,27 @@ void loop()
  playerOrder[ing] = -1;
  strip_player.setPixelColor(ing, BlankRGB);
  strip_player.show();
+ display.clearDisplay();
+ display.display();
+ display.setCursor(0, 15);
+ display.print("Onion Remove");
+ display.display();
  }
 
  // Lettuce
- Lettuce = ADS.readADC(0);
- if (Lettuce >=13300 && Lettuce <13600 && lettuceCount == 0)
+ Lettuce = ADS.readADC(1);
+ if (Lettuce >=13200 && Lettuce <13600 && lettuceCount == 0)
  {
  playerOrder[ing] = 4;
  strip_player.setPixelColor(ing, LettuceRGB);
  strip_player.show();
  ing++;
  lettuceCount++;
+ display.clearDisplay();
+ display.display();
+ display.setCursor(0, 15);
+ display.print("Lettuce");
+ display.display();
  }
  else if (Lettuce >= 8800 && Lettuce <9100 && lettuceCount == 1)
  {
@@ -218,48 +294,77 @@ void loop()
  playerOrder[ing] = -1;
  strip_player.setPixelColor(ing, BlankRGB);
  strip_player.show();
+ display.clearDisplay();
+ display.display();
+ display.setCursor(0, 15);
+ display.print("Lettuce Removed");
+ display.display();
  }
 
  // BottomBun
- BottomBun = digitalRead(2);
- if (BottomBun == HIGH && bottomBunCount == 0)
+ BottomBun = digitalRead(3);
+ if (BottomBun == LOW && bottomBunCount == 0)
  {
  playerOrder[ing] = 5;
  strip_player.setPixelColor(ing, BunRGB);
  strip_player.show();
  ing++;
  bottomBunCount++;
+ display.clearDisplay();
+ display.display();
+ display.setCursor(0, 15);
+ display.print("Bottom Bun");
+ display.display();
  }
- else if(BottomBun == LOW && bottomBunCount != 0)
+ else if(BottomBun == HIGH && bottomBunCount != 0)
  {
  ing--;
  bottomBunCount--;
  playerOrder[ing] = -1;
  strip_player.setPixelColor(ing, BlankRGB);
  strip_player.show();
+ display.clearDisplay();
+ display.display();
+ display.setCursor(0, 15);
+ display.print("Bottom Bun Removed");
+ display.display();
  }
 
  // TopBun
- TopBun = digitalRead(3);
- if (TopBun == HIGH && topBunCount == 0)
+ TopBun = digitalRead(4);
+ if (TopBun == LOW && topBunCount == 0)
  {
  playerOrder[ing] = 6;
  strip_player.setPixelColor(ing, BunRGB);
  strip_player.show();
  ing++;
  topBunCount++;
+ display.clearDisplay();
+ display.display();
+ display.setCursor(0, 15);
+ display.print("Top Bun");
+ display.display();
  }
- else if(TopBun == LOW && topBunCount != 0)
+ else if(TopBun == HIGH && topBunCount != 0)
  {
  ing--;
  topBunCount--;
  playerOrder[ing] = -1;
  strip_player.setPixelColor(ing, BlankRGB);
  strip_player.show();
+ display.clearDisplay();
+ display.display();
+ display.setCursor(0, 15);
+ display.print("Top Bun Removed");
+ display.display();
  }
  delay(50);
  }
-
+ display.clearDisplay();
+ display.display();
+ display.setCursor(0, 15);
+ display.print("Bell Rung Loser");
+ display.display();
  mp3.playTrackNumber(1, 25);
  delay(500);
  for (int i=0; i<len; i++)
@@ -395,7 +500,7 @@ void loop()
  }
 
  // Lettuce
- Lettuce = ADS.readADC(0);
+ Lettuce = ADS.readADC(1);
  if (Lettuce >=13300 && Lettuce <13600 && lettuceCount == 0)
  {
  playerOrder[ing] = 4;
@@ -422,8 +527,8 @@ void loop()
  }
 
  // BottomBun
- BottomBun = digitalRead(2);
- if (BottomBun == HIGH && bottomBunCount == 0)
+ BottomBun = digitalRead(3);
+ if (BottomBun == LOW && bottomBunCount == 0)
  {
  playerOrder[ing] = 5;
  strip_player.setPixelColor(ing, BunRGB);
@@ -431,7 +536,7 @@ void loop()
  ing++;
  bottomBunCount++;
  }
- else if(BottomBun == LOW && bottomBunCount != 0)
+ else if(BottomBun == HIGH && bottomBunCount != 0)
  {
  ing--;
  bottomBunCount--;
@@ -441,8 +546,8 @@ void loop()
  }
 
  // TopBun
- TopBun = digitalRead(3);
- if (TopBun == HIGH && topBunCount == 0)
+ TopBun = digitalRead(4);
+ if (TopBun == LOW && topBunCount == 0)
  {
  playerOrder[ing] = 6;
  strip_player.setPixelColor(ing, BunRGB);
@@ -450,7 +555,7 @@ void loop()
  ing++;
  topBunCount++;
  }
- else if(TopBun == LOW && topBunCount != 0)
+ else if(TopBun == HIGH && topBunCount != 0)
  {
  ing--;
  topBunCount--;
