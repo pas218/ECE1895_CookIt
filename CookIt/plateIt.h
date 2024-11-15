@@ -49,7 +49,7 @@ private:
   int bottomBunInput;
   int bellInput;
 
-  int order[7];
+  int order[3];
   //BottomBun, Patty, Cheese, Lettuce, Onion, TopBun
   int playerOrder[10];
   int ing;
@@ -114,11 +114,12 @@ PlateIt::PlateIt(int plateItBottomBun, int plateItTopBun, int plateItBell, int n
   
   order[0] = 5;
   order[1] = 0;
-  order[2] = 1;
-  order[3] = 4;
-  order[4] = 3;
-  order[5] = 2;
-  order[6] = 6;
+  order[2] = 6;
+  //order[2] = 1;
+  //order[3] = 4;
+  //order[4] = 3;
+  //order[5] = 2;
+  //order[6] = 6;
 
   ing = 0;
   winFlag = 1;
@@ -173,51 +174,42 @@ int PlateIt::plateItNormal()
 {
   int returnVal = 0;
   bool checker;
-  while(true)
-  {
-    checker = checkPatty();
-    if (checker == 1){
-      returnVal = 1;
-      break;
-    }
-    checker = checkCheese();
-    if (checker == 1){
-      returnVal = 1;
-      break;
-    }
-    checker = checkTomato();
-    if (checker == 1){
-      returnVal = 1;
-      break;
-    }
-    checker = checkOnion();
-    if (checker == 1){
-      returnVal = 1;
-      break;
-    }
-    checker = checkTopBun();
-    if (checker == 1){
-      returnVal = 1;
-      break;
-    }
-    checker = checkBottomBun();
-    if (checker == 1){
-      returnVal = 1;
-      break;
-    }
-    checker = checkLettuce();
-    if(checker == 1)
-    {
-      returnVal = 1;
-      break;
-    }
-    checker = checkBell();
-    if(checker == 1)
-    {
-      returnVal = 2;
-      break;
-    }
+ 
+  checker = checkPatty();
+  if (checker == 1){
+    returnVal = 1;
   }
+  checker = checkCheese();
+  if (checker == 1){
+    returnVal = 1;
+  }
+  checker = checkTomato();
+  if (checker == 1){
+    returnVal = 1;
+  }
+  checker = checkOnion();
+  if (checker == 1){
+    returnVal = 1;
+  }
+  checker = checkTopBun();
+  if (checker == 1){
+    returnVal = 1;
+  }
+  checker = checkBottomBun();
+  if (checker == 1){
+    returnVal = 1;
+  }
+  checker = checkLettuce();
+  if(checker == 1)
+  {
+    returnVal = 1;
+  }
+  checker = checkBell();
+  if(checker == 1)
+  {
+    returnVal = 2;
+  }
+  
   return returnVal;
 }
  bool PlateIt::checkPatty(){

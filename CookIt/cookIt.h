@@ -14,10 +14,14 @@ class CookIt
     int cookItEncoderDTInput;
     int cookItEncoderClkInput;
 
+    bool continueToTurn;
+    int returnVal;
+
   public:
 
     CookIt(int cookItButton, int cookItEncoderDT, int cookItEncoderClk);
     int runCookIt();
+    void resetCookIt();
 };
 
 
@@ -31,43 +35,48 @@ CookIt::CookIt(int cookItButton, int cookItEncoderDT, int cookItEncoderClk)
   cookItButtonInput = cookItButton;
   cookItEncoderDTInput = cookItEncoderDT;
   cookItEncoderClkInput = cookItEncoderClk;
+
+  returnVal = 0;
+  continueToTurn = 0;
+
 }
 
 int CookIt::runCookIt()
 {
-  bool continueToTurn = 0;
 
-  while(continueToTurn == 0){
-    buttonVal = digitalRead(cookItButtonInput);
-    if(buttonVal == LOW){
-      continueToTurn = 1;
-    }
+  
+  buttonVal = digitalRead(cookItButtonInput);
+  if(buttonVal == LOW){
+    continueToTurn = 1;
+    returnVal = 1;
   }
     
-  while(continueToTurn == 1){
+    if (continueToTurn == 1){
 
+      for(int h = 0; h < 200; h++){
+      // Read the current state of inputCLK
+      currentStateDT = digitalRead(cookItEncoderDTInput);
 
-    // Read the current state of inputCLK
-    currentStateDT = digitalRead(cookItEncoderDTInput);
-
-    // If the previous and the current state of the inputCLK are different then a pulse has occured
-    if (currentStateDT != previousStateDT){ 
+      // If the previous and the current state of the inputCLK are different then a pulse has occured
+      if (currentStateDT != previousStateDT){ 
           
         
         // If the inputDT state is same as the inputCLK state then 
         // the encoder is rotating counterclockwise
         if (digitalRead(cookItEncoderClkInput) == currentStateDT) { 
-          numTurns++;
+          returnVal++;
         }
       } 
       // Update previousStateCLK with the current state
       previousStateDT = currentStateDT;
-
-      if(numTurns > 3){
-          continueToTurn = 0;
-      }
     }
+    
 
-    // Reset the counter for the
-    numTurns = 0;
+ }
+
+  return returnVal;
 }
+
+void CookIt::resetCookIt(){
+  continueToTurn = 0;
+  returnVal = 0;

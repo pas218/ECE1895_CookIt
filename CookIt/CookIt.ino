@@ -41,6 +41,10 @@ ChopIt chopItInstance   = ChopIt(chopItInput, requiredNumChops);
 CookIt cookItInstance   = CookIt(cookItButton, cookItEncoderDT, cookItEncoderClk);
 PlateIt plateItInstance = PlateIt(plateItBottomBun, plateItTopBun, plateItBell, plateItNeoPixelLED0, plateItNeoPixelLED1, plateItNeoPixelLEDCount);
 
+int right = 0;
+int leaveLoop = 0;
+int returnNumber = 0
+
 
 void setup() {
 
@@ -61,15 +65,17 @@ void setup() {
   pinMode(5, INPUT_PULLUP);
   pinMode(cookItButton, INPUT_PULLUP);
 
-  randomSeed(millis());
+  randomSeed(analogRead(0));
   plateItInstance.initialize();
   
 }
 
 void loop() {
   
- int returnNumber;
-  mp3.playTrackNumber(3, 20);
+
+
+  mp3.playTrackNumber(1, 20);
+
 
   while(true)
   {
@@ -77,36 +83,69 @@ void loop() {
 
     //randNumber = random(0, 4);
     randNumber = 0;
-    
+    leaveLoop = 0;
+
     // Chop it
     if (randNumber == 0){
-      mp3.playTrackNumber(5, 20);
+      mp3.playTrackNumber(5, 15);
+      returnNumber = 0;
       delay(100);
-      chopItInstance.runChopIt();
-      //chopItInstance.resetChopIt();
-      mp3.playTrackNumber(8, 20);
+      while (leaveLoop == 0){
+        /*
+        returnNumber = chopItInstance.runChopIt();
+        if (returnNumber == 1){
+          right = 1;
+          leaveLoop = 1;
+          break;
+        }*/
+        delay(50);
+        returnNumber = cookItInstance.runCookIt();
+        if (returnNumber == 1){
+            cookItInstance.resetCookIt();
+            right = 0;
+            leaveLoop = 1;
+            break;
+        }
+        /*
+        returnNumber = plateItInstance.plateItNormal();
+        if (returnNumber != 0){
+          right = 0;
+          leaveLoop = 1;
+          break;
+        }*/
+      }
+      delay(150);
+      if (right == 1){
+        
+        mp3.playTrackNumber(8, 15);
+      }
+      else{
+        mp3.playTrackNumber(9, 15);
+      }
     }
     // Cook it
     else if (randNumber == 1){
-      mp3.playTrackNumber(6, 20);
+      mp3.playTrackNumber(6, 15);
       cookItInstance.runCookIt();
-      mp3.playTrackNumber(8, 20);
+      mp3.playTrackNumber(8, 15);
     }
     // Plate It
     else{
-      mp3.playTrackNumber(7, 20);
+      mp3.playTrackNumber(7, 15);
       returnNumber = plateItInstance.plateItNormal();
       // Ingredient placed
       if (returnNumber == 1)
       {
-        mp3.playTrackNumber(8, 20);
+        mp3.playTrackNumber(8, 15);
       }
       // Bell rang
       else if (returnNumber == 2)
       {
-        mp3.playTrackNumber(1, 20);
+        mp3.playTrackNumber(1, 15);
       } 
     }
+
+    //chopItInstance.resetChopIt();
   }
 }
 

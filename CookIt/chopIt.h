@@ -29,21 +29,29 @@ ChopIt::ChopIt(int chopItInput, int requiredNumChops)
 int ChopIt::runChopIt()
 {
   
-  while(true){
+  int returnVal;
+  //while(true){
     // Read the value of the digital input associated with Chop-It.
     //sensorVal = digitalRead(chopItInput);
     //sensorVal = HIGH;
     // If the digital input is low (meaning the knife has been used to complete the circuit),
     // turn off the LED to signify that the input has been read and break from the infinite loop.
     if (digitalRead(5) == LOW){
-      numChops++;
-      delay(750);
-      break;
+      //numChops++;
+      //delay(750);
+      
+      //if (numChops >= requiredNumChops){
+        //break;
+      //}
+       returnVal = 1; 
+    }
+    else{
+      returnVal = 0;
     }
 
-  }
+  //}
 
-  return 1;
+  return returnVal;
 
 }
 /*
