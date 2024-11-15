@@ -10,9 +10,9 @@ class PlateIt
 private:
 
   ADS1115 ADS = ADS1115(0x48);
-//strip_order = Adafruit_NeoPixel(neoPixelLEDCount, neoPixelLED0, NEO_GRB + NEO_KHZ800);
+  //strip_order = Adafruit_NeoPixel(neoPixelLEDCount, neoPixelLED0, NEO_GRB + NEO_KHZ800);
   //strip_player = Adafruit_NeoPixel(neoPixelLEDCount, neoPixelLED1, NEO_GRB + NEO_KHZ800);
-  Adafruit_NeoPixel strip_order = Adafruit_NeoPixel(8, 0, NEO_GRB + NEO_KHZ800);
+  Adafruit_NeoPixel strip_order = Adafruit_NeoPixel(8, 2, NEO_GRB + NEO_KHZ800);
   Adafruit_NeoPixel strip_player = Adafruit_NeoPixel(8, 1, NEO_GRB + NEO_KHZ800);
 
   uint32_t BunRGB;
@@ -55,6 +55,7 @@ private:
   int ing;
   bool winFlag;
   int len;
+
 
   bool checkPatty();
   bool checkCheese();
@@ -131,12 +132,13 @@ PlateIt::PlateIt(int plateItBottomBun, int plateItTopBun, int plateItBell, int n
     playerOrder[i] = -1;
   }
 
-  //ADS1115 ADS(0x48);
+  ADS1115 ADS(0x48);
 }
 
 void PlateIt::initialize()
 {
    // Initialize Plate-It NeoPixels
+   
   strip_order.begin();
   for (int i = 0; i < 8; i++)
   {
@@ -144,6 +146,7 @@ void PlateIt::initialize()
   }
   strip_order.show(); // Initialize all pixels to 'off'
   strip_order.setBrightness(50);
+  
   strip_player.begin();
   for (int i = 0; i < 8; i++)
   {
@@ -169,6 +172,8 @@ int PlateIt::plateItTestOne()
 
   return 1;
 }
+
+
 
 int PlateIt::plateItNormal()
 {
@@ -398,7 +403,7 @@ bool PlateIt::checkBottomBun()
   // BottomBun
   int readInput = 0;
   BottomBun = digitalRead(bottomBunInput);
-  if (BottomBun == HIGH && bottomBunCount == 0)
+  if (BottomBun == LOW && bottomBunCount == 0)
   {
     playerOrder[ing] = 5;
     strip_player.setPixelColor(ing, BunRGB);
@@ -407,7 +412,7 @@ bool PlateIt::checkBottomBun()
     bottomBunCount++;
     readInput = 1;
   }
-  else if(BottomBun == LOW && bottomBunCount != 0)
+  else if(BottomBun == HIGH && bottomBunCount != 0)
   {
     ing--;
     bottomBunCount--;
@@ -426,7 +431,7 @@ bool PlateIt::checkTopBun()
   // TopBun
   int readInput = 0;
   TopBun = digitalRead(topBunInput);
-  if (TopBun == HIGH && topBunCount == 0)
+  if (TopBun == LOW && topBunCount == 0)
   {
     playerOrder[ing] = 6;
     strip_player.setPixelColor(ing, BunRGB);
@@ -435,7 +440,7 @@ bool PlateIt::checkTopBun()
     topBunCount++;
     readInput = 1;
   }
-  else if(TopBun == LOW && topBunCount != 0)
+  else if(TopBun == HIGH && topBunCount != 0)
   {
     ing--;
     topBunCount--;
@@ -452,7 +457,7 @@ bool PlateIt::checkBell()
   // Bell
   int readInput = 0;
   Bell = digitalRead(bellInput);
-  if (Bell == HIGH)
+  if (Bell == LOW)
   {
     readInput = 1;
   }
@@ -517,4 +522,4 @@ int PlateIt::arraySize(int arr[], int arrSize)
 {
  int len = arrSize / sizeof(arr[0]);
  return len;
-}
+}

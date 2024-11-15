@@ -14,13 +14,17 @@ class CookIt
     int cookItEncoderDTInput;
     int cookItEncoderClkInput;
 
+
     bool continueToTurn;
-    int returnVal;
+    int cookItButtonReturn;
+    int cookItEncoderReturn;
 
   public:
 
     CookIt(int cookItButton, int cookItEncoderDT, int cookItEncoderClk);
-    int runCookIt();
+    int cookItButton();
+    int runCookItButton();
+    int runCookItEncoder();
     void resetCookIt();
 };
 
@@ -36,47 +40,50 @@ CookIt::CookIt(int cookItButton, int cookItEncoderDT, int cookItEncoderClk)
   cookItEncoderDTInput = cookItEncoderDT;
   cookItEncoderClkInput = cookItEncoderClk;
 
-  returnVal = 0;
+  cookItEncoderReturn = 0;
   continueToTurn = 0;
+  cookItButtonReturn = 0;
 
 }
 
-int CookIt::runCookIt()
+int CookIt::runCookItButton()
 {
+  cookItButtonReturn = 0;
 
-  
   buttonVal = digitalRead(cookItButtonInput);
   if(buttonVal == LOW){
-    continueToTurn = 1;
-    returnVal = 1;
+    cookItButtonReturn = 1;
   }
+
+  return cookItButtonReturn;
+}
+
+int CookIt::runCookItEncoder()
+{
+
+ 
+
+  // Read the current state of inputCLK
+  currentStateDT = digitalRead(cookItEncoderDTInput);
+
+  // If the previous and the current state of the inputCLK are different then a pulse has occured
+  if (currentStateDT != previousStateDT){ 
+      
     
-    if (continueToTurn == 1){
-
-      for(int h = 0; h < 200; h++){
-      // Read the current state of inputCLK
-      currentStateDT = digitalRead(cookItEncoderDTInput);
-
-      // If the previous and the current state of the inputCLK are different then a pulse has occured
-      if (currentStateDT != previousStateDT){ 
-          
-        
-        // If the inputDT state is same as the inputCLK state then 
-        // the encoder is rotating counterclockwise
-        if (digitalRead(cookItEncoderClkInput) == currentStateDT) { 
-          returnVal++;
-        }
-      } 
-      // Update previousStateCLK with the current state
-      previousStateDT = currentStateDT;
+    // If the inputDT state is same as the inputCLK state then 
+    // the encoder is rotating counterclockwise
+    if (digitalRead(cookItEncoderClkInput) == currentStateDT) { 
+      cookItEncoderReturn++;
     }
-    
+  } 
+  // Update previousStateCLK with the current state
+  previousStateDT = currentStateDT;
 
- }
 
-  return returnVal;
+  return cookItEncoderReturn;
 }
 
 void CookIt::resetCookIt(){
-  continueToTurn = 0;
-  returnVal = 0;
+  cookItButtonReturn = 0;
+  cookItEncoderReturn = 0;
+}
