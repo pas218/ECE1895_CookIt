@@ -51,6 +51,7 @@
 #define mp3_callPlateIt 7
 #define mp3_sayGoodJob 8
 #define mp3_sayYouSuck 9
+#define mp3_disassembleBurger 10
 
 
 // Cook-It Initializations
@@ -76,6 +77,8 @@ bool right = false;
 int leaveLoop = 0;
 int returnNumber = 0;
 int totalScore = 0;
+bool correctOrder = false;
+int burgerSize = 3;
 
 
 // Variables for keeping track of time (mostly using the millis() function).
@@ -131,7 +134,6 @@ void setup() {
   ///// INITIALIZE PLATE-IT /////
   plateItInstance.initialize();
   
-  
 }
 
 void loop() {
@@ -141,9 +143,11 @@ void loop() {
   mp3.playTrackNumber(mp3_introChord, 20);
   delay(100);
 
+
   // Enter while loop to start the game.
   while(true)
   {
+
     delay(500);
 
     // Display score.
@@ -154,8 +158,8 @@ void loop() {
     display.setCursor(0,0);
     display.display(); 
 
-    // 0 = Chop-It, 1 = Cook-it, 2 = Plate-it
-    randNumber = random(0, 2);
+    // 0-19 = Chop-It, 20-39 = Cook-it, 40-59 = Plate-it
+    randNumber = random(0, 60);
     //randNumber =  2;
 
     // Initialize all control variables to base values.
@@ -169,7 +173,7 @@ void loop() {
 
 
     //////////////////// CHOP IT ////////////////////
-    if (randNumber == 0){
+    if ((randNumber >= 0) && (randNumber < 20)){
 
       mp3.playTrackNumber(mp3_callChopIt, 15);
       delay(100);
@@ -211,7 +215,7 @@ void loop() {
 
 
     //////////////////// COOK IT ////////////////////
-    else if (randNumber == 1){
+    else if ((randNumber >= 20) && (randNumber < 40)){
       
       mp3.playTrackNumber(mp3_callCookIt, 15);
       delay(100);
@@ -278,14 +282,16 @@ void loop() {
       mp3.playTrackNumber(mp3_callPlateIt, 15);
       delay(100);
 
+      plateItInstance.generateNewBurger(burgerSize); 
+
        // Check for Plate-It input and time spent waiting for input. Exits if:
       // 1) The player has made 1 input on Plate-It (EX: place lettuce, remove burger, or ring bell)
       // 2) The user takes too long to "Chop-It"
       while (leaveLoop == 0){
-        // Run playe it. The return number will be 1 if a general input has occured (EX: burger placed).
+        // Run plate it. The return number will be 1 if a general input has occured (EX: burger placed).
         // The return will be 2 if the bell has been rung. Otherwise the return will be 0.
         returnNumber = plateItInstance.plateItNormal();
-        if (returnNumber != 0)
+        if (returnNumber == 2)
         {
           right = true;
           leaveLoop = 1;
@@ -301,30 +307,106 @@ void loop() {
 
       // After exiting the while loop, determine which sound effect to play, 
       // depending on how the player performed previously.
+      // INCORRECT INPUT
       if (right == false){
         mp3.playTrackNumber(mp3_sayYouSuck, 15);
       }
-      //regular ingredient places
+
+      // REGULAR INGREDIENT PLACE
       else if (returnNumber == 1){
         mp3.playTrackNumber(mp3_sayGoodJob, 15);
       }
-      // mp3_bell rang
+
+      // BELL RANG
       else if (returnNumber == 2)
       {
         mp3.playTrackNumber(mp3_bell, 15);
+        delay(1000);
+
+        // Determine if the order is correct. 
+        correctOrder = plateItInstance.compareOrderToPlayer();
+        if (correctOrder == true){
+          mp3.playTrackNumber(mp3_sayGoodJob, 15);
+        }
+        else{
+          mp3.playTrackNumber(mp3_sayYouSuck, 15);
+        }
+        delay(1000);
+        
+        mp3.playTrackNumber(mp3_disassembleBurger, 15);
+        // Get starting time to compare time passed later.
+        startTime = millis();
+
+        // Check for "Disassemble-It" input and time spent waiting for input. Exits if:
+        // 1) The player has removed all burger ingredients
+        // 2) The user takes too long
+        leaveLoop = 0;
+        while(!leaveLoop){
+          //returnNumber will be 1 on the condition that all ingredients have been removed from Plate-It;
+          returnNumber = plateItInstance.disassembleBurger();
+          if (returnNumber != 0){
+            leaveLoop = 1;
+          }
+
+          // Measure the current time and determing if the user is taking too long to complete the action.
+          endTime = millis();
+          if ((endTime-startTime) >= timePerFunction){
+            right = false;
+            leaveLoop = 1;
+          }
+        }
+
+
+        // After exiting the while loop, determine which sound effect to play, 
+        // depending on how the player performed previously.
+        if (right == true){
+          mp3.playTrackNumber(mp3_sayGoodJob, 15);
+        }
+        else{
+          mp3.playTrackNumber(mp3_sayYouSuck, 15);
+        }
+
       }
-      delay(1000);  
+      delay(1000); 
+       
     }
 
 
-    // Reset all internal values of Cook-It and Chop-It.
+    // Reset all of out classes.
     cookItInstance.resetCookIt();
     chopItInstance.resetChopIt();
+    plateItInstance.resetPlateIt();
     
     // Increase total score.
-    totalScore++;
+    if (right == 1 ){
+        if (totalScore >= 99){
+          totalScore = 0;
+        }
+        else{
+          totalScore++;
+        }
+    }
+    
+    if ((totalScore >= 0) && (totalScore < 20)){
+      burgerSize = 3;
+    }
+    else if ((totalScore >= 20) && (totalScore < 40)){
+      burgerSize = 4;
+    }
+    else if ((totalScore >= 40) && (totalScore < 60)){
+      burgerSize = 5;
+    }
+    else if ((totalScore >= 60) && (totalScore < 80)){
+      burgerSize = 6;
+    }
+    else if (totalScore >= 80){
+      burgerSize = 7;
+    }
+    
+    
   }
   //// END GAME WHILE LOOP //
   
 }
 
+        
