@@ -92,6 +92,8 @@ public:
   int plateItNormal();
   bool disassembleBurger();
   bool compareOrderToPlayer();
+  int returnPattySpot();
+  bool forceDisassemble();
   void orderDisplay(int arr[], int len);
   void resetPlateIt();
   int arraySize(int arr[], int arrSize);
@@ -582,6 +584,19 @@ bool PlateIt::checkBell() {
     readInput = 1;
   }
   return readInput;
+}
+
+// Return values
+// -1: No return
+// 0: Chop it
+// 1: Cook-It
+// 2: Plate-It
+int PlateIt::returnPattySpot(){
+
+}
+
+bool PlateIt::forceDisassemble(){
+  return (ing > 0) ? true : false;
 }
 
 // Display the burger order.

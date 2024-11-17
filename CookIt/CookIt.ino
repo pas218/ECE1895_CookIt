@@ -7,9 +7,10 @@
 #include "chopIt.h"
 #include "cookIt.h"
 #include "plateIt.h"
-#define i2c_Address 0x3C
+#include "misc.h"
+
 #ifdef __AVR__
- #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
+#include <avr/power.h>  // Required for 16 MHz Adafruit Trinket
 #endif
 
 
@@ -19,8 +20,8 @@
 
 ///// ADAFRUIT Screen Assignments /////
 #define WIRE Wire
-#define SCREEN_WIDTH 128 // OLED display width, in pixels
-#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+#define SCREEN_WIDTH 128  // OLED display width, in pixels
+#define SCREEN_HEIGHT 64  // OLED display height, in pixels
 
 
 ///// Digital Pin assignments /////
@@ -36,12 +37,16 @@
 #define requiredCookItMoves 10
 
 // Plate-It related inputs.
-#define plateItNeoPixelLED0 2       // Order
-#define plateItNeoPixelLED1 1       // Player
+#define plateItNeoPixelLED0 2  // Order
+#define plateItNeoPixelLED1 1  // Player
 #define plateItNeoPixelLEDCount 8
 #define plateItBottomBun 3
 #define plateItTopBun 4
 #define plateItmp3_bell 12
+
+// Misc Inputs
+#define startButtonInput 9
+
 
 //Sound effects
 #define mp3_bell 1
@@ -52,6 +57,7 @@
 #define mp3_sayGoodJob 8
 #define mp3_sayYouSuck 9
 #define mp3_disassembleBurger 10
+#define mp3_sayPressStartToProceed 11
 
 
 // Cook-It Initializations
@@ -59,32 +65,38 @@ int counter = 0;
 int currentStateDT;
 int previousStateDT;
 
+// Beginning variables
+int startScore = 0;
+int startLives = 3;
 
 // Needed classes.
-MP3Player mp3(10,11);  //MP3 Player
-ChopIt chopItInstance   = ChopIt(chopItInput);
-CookIt cookItInstance   = CookIt(cookItButton, cookItEncoderDT, cookItEncoderClk);
+MP3Player mp3(10, 11);  //MP3 Player
+ChopIt chopItInstance = ChopIt(chopItInput);
+CookIt cookItInstance = CookIt(cookItButton, cookItEncoderDT, cookItEncoderClk);
 PlateIt plateItInstance = PlateIt(plateItBottomBun, plateItTopBun, plateItmp3_bell, plateItNeoPixelLED0, plateItNeoPixelLED1, plateItNeoPixelLEDCount);
+Misc misc = Misc(startScore, startLives, startButtonInput);
 Adafruit_SSD1306 display = Adafruit_SSD1306(128, 32, &WIRE);  // OLED
 
 
 // Used for generating random numbers.
-long randNumber; 
+long randNumber;
 
 
-// Variables for program control. 
+// Variables for program control.
 bool right = false;
 int leaveLoop = 0;
 int returnNumber = 0;
 int totalScore = 0;
+int totalLives = 0;
 bool correctOrder = false;
 int burgerSize = 3;
+bool playGame = false;
 
 
 // Variables for keeping track of time (mostly using the millis() function).
 unsigned long startTime = 0;
 unsigned long endTime = 0;
-unsigned long timePerFunction = 10000;   // This is the amound of time in miliseconds that a player is allowed to take to complete an input.
+unsigned long timePerFunction = 10000;  // This is the amound of time in miliseconds that a player is allowed to take to complete an input.
 bool tooLong = false;
 
 
@@ -92,7 +104,7 @@ void setup() {
 
 
   ///// SCREEN INITIALIZATIONS /////
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3C); // Address 0x3C for 128x32
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // Address 0x3C for 128x32
   display.display();
   delay(1000);
 
@@ -103,27 +115,30 @@ void setup() {
   // text display tests
   display.setTextSize(2);
   display.setTextColor(SSD1306_WHITE);
-  display.display();     // This will end up being blank.
-  ///// END SCREEN INITIALIZATIONS /////
+  display.display();  // This will end up being blank.
+///// END SCREEN INITIALIZATIONS /////
 
-  // Not 100% sure what this is but I think we need it.
-  #if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
+// Not 100% sure what this is but I think we need it.
+#if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
   clock_prescale_set(clock_div_1);
-  #endif
+#endif
 
 
   ///// DEFINE CHOP-IT INPUTS /////
   pinMode(chopItInput, INPUT);
 
   ///// DEFINE COOK-iT INPUTS /////
-  pinMode (cookItEncoderClk,INPUT);
-  pinMode (cookItEncoderDT,INPUT);
+  pinMode(cookItEncoderClk, INPUT);
+  pinMode(cookItEncoderDT, INPUT);
   pinMode(cookItButton, INPUT);
 
   ///// DEFINE PLATE-IT INPUTS /////
   pinMode(plateItBottomBun, INPUT);
   pinMode(plateItTopBun, INPUT);
   pinMode(plateItmp3_bell, INPUT);
+
+  ///// DEFINE MISC INPUTS /////
+  pinMode(startButtonInput, INPUT);
 
   ///// MP3 INITIALIZATION
   mp3.initialize();
@@ -133,11 +148,18 @@ void setup() {
 
   ///// INITIALIZE PLATE-IT /////
   plateItInstance.initialize();
-  
 }
 
 void loop() {
-  
+
+  mp3.playTrackNumber(mp3_sayPressStartToProceed, 15);
+  delay(100);
+
+  while(!playGame){
+    if (misc.startButtonPressed() == true){
+      playGame = true;
+    }
+  }
 
   // Play introductory chord (there needs to be a delay after every MP3)
   mp3.playTrackNumber(mp3_introChord, 20);
@@ -145,18 +167,34 @@ void loop() {
 
 
   // Enter while loop to start the game.
-  while(true)
-  {
+  while (playGame) {
 
     delay(500);
 
+    // Get total score and set burger size.
+    totalScore = misc.getScore();
+    if ((totalScore >= 0) && (totalScore < 20)) {
+      burgerSize = 3;
+    } else if ((totalScore >= 20) && (totalScore < 40)) {
+      burgerSize = 4;
+    } else if ((totalScore >= 40) && (totalScore < 60)) {
+      burgerSize = 5;
+    } else if ((totalScore >= 60) && (totalScore < 80)) {
+      burgerSize = 6;
+    } else if (totalScore >= 80) {
+      burgerSize = 7;
+    }
+
     // Display score.
+    totalLives = misc.getLives();
     display.clearDisplay();
     display.display();
-    display.setCursor(0,0);
-    display.print(totalScore);
-    display.setCursor(0,0);
-    display.display(); 
+    display.setCursor(0, 0);
+    display.print("Score: ");
+    display.println(totalScore);
+    display.print(totalLives);
+    display.setCursor(0, 0);
+    display.display();
 
     // 0-19 = Chop-It, 20-39 = Cook-it, 40-59 = Plate-it
     randNumber = random(0, 60);
@@ -173,7 +211,7 @@ void loop() {
 
 
     //////////////////// CHOP IT ////////////////////
-    if ((randNumber >= 0) && (randNumber < 20)){
+    if ((randNumber >= 0) && (randNumber < 20)) {
 
       mp3.playTrackNumber(mp3_callChopIt, 15);
       delay(100);
@@ -181,11 +219,11 @@ void loop() {
       // Check for Chop-It input and time spent waiting for input.
       // Exits if either 1) the correct Chop-It input is recieved or
       // 2) The user takes too long to "Chop-It"
-      while (leaveLoop == 0){
-        
+      while (leaveLoop == 0) {
+
         // Run chop it. The return value will be the current number of chops that have been done.
         returnNumber = chopItInstance.runChopIt();
-        if (returnNumber >= requiredNumChops){
+        if (returnNumber >= requiredNumChops) {
           right = true;
           leaveLoop = 1;
         }
@@ -193,7 +231,7 @@ void loop() {
 
         // Measure the current time and determing if the user is taking too long to complete the action.
         endTime = millis();
-        if ((endTime-startTime) >= timePerFunction){
+        if ((endTime - startTime) >= timePerFunction) {
           right = false;
           leaveLoop = 1;
         }
@@ -202,21 +240,18 @@ void loop() {
 
       // After exiting the while loop, determine which sound effect to play, depending
       // on how the player performed previously.
-      if (right == true){
-        
+      if (right == true) {
+
         mp3.playTrackNumber(mp3_sayGoodJob, 15);
-      }
-      else{
+      } else {
         mp3.playTrackNumber(mp3_sayYouSuck, 15);
       }
-      
-      delay(1000);
     }
 
 
     //////////////////// COOK IT ////////////////////
-    else if ((randNumber >= 20) && (randNumber < 40)){
-      
+    else if ((randNumber >= 20) && (randNumber < 40)) {
+
       mp3.playTrackNumber(mp3_callCookIt, 15);
       delay(100);
 
@@ -224,20 +259,19 @@ void loop() {
       // First check for button input from the encoder. The program will leave this loop under 2 conditions:
       // 1) The player successfully press the encoder button or
       // 2) The player has spent too long doing an input
-      while (leaveLoop == 0){
+      while (leaveLoop == 0) {
         // Read if the button has been pressed. Return 1 if there is a press, 0 otherwise.
         returnNumber = cookItInstance.runCookItButton();
-        if (returnNumber >= 1){
+        if (returnNumber >= 1) {
           leaveLoop = 1;
         }
         delay(50);
         // Measure the current time and determing if the user is taking too long to complete the action.
         endTime = millis();
-        if ((endTime-startTime) >= timePerFunction){
+        if ((endTime - startTime) >= timePerFunction) {
           right = false;
           leaveLoop = 1;
           tooLong = true;
-          
         }
       }
 
@@ -245,17 +279,17 @@ void loop() {
       // 1) The player successfully turned the encoder clockwise the proper amount of turns.
       // 2) The player has spent too long doing an input
       leaveLoop = 0;
-      while ((leaveLoop == 0) && (tooLong == false)){
+      while ((leaveLoop == 0) && (tooLong == false)) {
         // Check the number of "ticks" that have been made. The return value will be the number of ticks.
         returnNumber = cookItInstance.runCookItEncoder();
-        if (returnNumber >= requiredCookItMoves){
+        if (returnNumber >= requiredCookItMoves) {
           leaveLoop = 1;
           right = true;
         }
 
         // Measure the current time and determing if the user is taking too long to complete the action.
         endTime = millis();
-        if ((endTime-startTime) >= timePerFunction){
+        if ((endTime - startTime) >= timePerFunction) {
           right = false;
           leaveLoop = 1;
           tooLong = true;
@@ -263,36 +297,32 @@ void loop() {
       }
 
 
-      // After exiting the while loop, determine which sound effect to play, 
+      // After exiting the while loop, determine which sound effect to play,
       // depending on how the player performed previously.
-      if (right == true){
+      if (right == true) {
         mp3.playTrackNumber(mp3_sayGoodJob, 15);
-      }
-      else{
+      } else {
         mp3.playTrackNumber(mp3_sayYouSuck, 15);
       }
-      delay(1000);
-      
     }
 
 
     //////////////////// PLATE IT ////////////////////
-    else{
+    else {
 
       mp3.playTrackNumber(mp3_callPlateIt, 15);
       delay(100);
 
-      plateItInstance.generateNewBurger(burgerSize); 
+      plateItInstance.generateNewBurger(burgerSize);
 
-       // Check for Plate-It input and time spent waiting for input. Exits if:
+      // Check for Plate-It input and time spent waiting for input. Exits if:
       // 1) The player has made 1 input on Plate-It (EX: place lettuce, remove burger, or ring bell)
       // 2) The user takes too long to "Chop-It"
-      while (leaveLoop == 0){
+      while (leaveLoop == 0) {
         // Run plate it. The return number will be 1 if a general input has occured (EX: burger placed).
         // The return will be 2 if the bell has been rung. Otherwise the return will be 0.
         returnNumber = plateItInstance.plateItNormal();
-        if (returnNumber == 2)
-        {
+        if (returnNumber == 2) {
           right = true;
           leaveLoop = 1;
         }
@@ -300,40 +330,42 @@ void loop() {
 
         // Measure the current time and determing if the user is taking too long to complete the action.
         endTime = millis();
-        if ((endTime-startTime) >= timePerFunction){
+        if ((endTime - startTime) >= timePerFunction) {
           right = false;
           leaveLoop = 1;
         }
       }
 
-      // After exiting the while loop, determine which sound effect to play, 
+      // After exiting the while loop, determine which sound effect to play,
       // depending on how the player performed previously.
       // INCORRECT INPUT
-      if (right == false){
+      if (right == false) {
         mp3.playTrackNumber(mp3_sayYouSuck, 15);
       }
 
       // REGULAR INGREDIENT PLACE
-      else if (returnNumber == 1){
+      else if (returnNumber == 1) {
         mp3.playTrackNumber(mp3_sayGoodJob, 15);
       }
 
       // BELL RANG
-      else if (returnNumber == 2)
-      {
+      else if (returnNumber == 2) {
         mp3.playTrackNumber(mp3_bell, 15);
         delay(1000);
 
-        // Determine if the order is correct. 
+        // Determine if the order is correct.
         correctOrder = plateItInstance.compareOrderToPlayer();
-        if (correctOrder == true){
+        if (correctOrder == true) {
           mp3.playTrackNumber(mp3_sayGoodJob, 15);
-        }
-        else{
+        } else {
           mp3.playTrackNumber(mp3_sayYouSuck, 15);
         }
         delay(1000);
-        
+      }
+
+
+      if (plateItInstance.forceDisassemble()) {
+
         mp3.playTrackNumber(mp3_disassembleBurger, 15);
         // Get starting time to compare time passed later.
         startTime = millis();
@@ -342,73 +374,51 @@ void loop() {
         // 1) The player has removed all burger ingredients
         // 2) The user takes too long
         leaveLoop = 0;
-        while(!leaveLoop){
+        while (!leaveLoop) {
           //returnNumber will be 1 on the condition that all ingredients have been removed from Plate-It;
           returnNumber = plateItInstance.disassembleBurger();
-          if (returnNumber != 0){
+          if (returnNumber != 0) {
             leaveLoop = 1;
           }
           delay(50);
 
           // Measure the current time and determing if the user is taking too long to complete the action.
           endTime = millis();
-          if ((endTime-startTime) >= timePerFunction){
+          if ((endTime - startTime) >= timePerFunction) {
             right = false;
             leaveLoop = 1;
           }
         }
 
 
-        // After exiting the while loop, determine which sound effect to play, 
+        // After exiting the while loop, determine which sound effect to play,
         // depending on how the player performed previously.
-        if (right == true){
+        if (right == true) {
           mp3.playTrackNumber(mp3_sayGoodJob, 15);
-        }
-        else{
+        } else {
           mp3.playTrackNumber(mp3_sayYouSuck, 15);
         }
-
       }
-      delay(1000); 
-       
     }
+    delay(1000);
 
 
     // Reset all of out classes.
     cookItInstance.resetCookIt();
     chopItInstance.resetChopIt();
     plateItInstance.resetPlateIt();
-    
+
     // Increase total score.
-    if (right == 1 ){
-        if (totalScore >= 99){
-          totalScore = 0;
-        }
-        else{
-          totalScore++;
-        }
+    if (right == 1) {
+      misc.increaseScore();
+    } else {
+      misc.decreaseLives();
     }
-    
-    if ((totalScore >= 0) && (totalScore < 20)){
-      burgerSize = 3;
+
+    // Check if user is out of lives
+    if (misc.getLives() == 0){
+      playGame = false;
     }
-    else if ((totalScore >= 20) && (totalScore < 40)){
-      burgerSize = 4;
-    }
-    else if ((totalScore >= 40) && (totalScore < 60)){
-      burgerSize = 5;
-    }
-    else if ((totalScore >= 60) && (totalScore < 80)){
-      burgerSize = 6;
-    }
-    else if (totalScore >= 80){
-      burgerSize = 7;
-    }
-    
-    
   }
   //// END GAME WHILE LOOP //
-  
 }
-
-        
