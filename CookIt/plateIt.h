@@ -20,13 +20,12 @@
 class PlateIt {
 private:
 
+  // Needed classes for Plate-It.
   ADS1115 ADS = ADS1115(0x48);
-  //strip_order = Adafruit_NeoPixel(neoPixelLEDCount, neoPixelLED0, NEO_GRB + NEO_KHZ800);
-  //strip_player = Adafruit_NeoPixel(neoPixelLEDCount, neoPixelLED1, NEO_GRB + NEO_KHZ800);
   Adafruit_NeoPixel strip_player = Adafruit_NeoPixel(8, 1, NEO_GRB + NEO_KHZ800);   // player
   Adafruit_NeoPixel strip_order = Adafruit_NeoPixel(8, 2, NEO_GRB + NEO_KHZ800);    // order
   
-
+  // RBG values for all of the ingredients.
   uint32_t BunRGB;
   uint32_t PattyRGB;
   uint32_t LettuceRGB;
@@ -35,11 +34,13 @@ private:
   uint32_t TomatoRGB;
   uint32_t BlankRGB;
 
+  // Analog input pins.
   int resPin0;
   int resPin1;
   int resPin2;
   int resPin3;
 
+  // Variables to hold analog value inputs of ingredients.
   int Patty;
   int Cheese;
   int Tomato;
@@ -49,6 +50,7 @@ private:
   int TopBun;
   int Bell;
 
+  // Count variables for all ingredients.
   int pattyCount;
   int cheeseCount;
   int tomatoCount;
@@ -57,22 +59,23 @@ private:
   int bottomBunCount;
   int topBunCount;
 
+  // Digital pin assignments.
   int topBunInput;
   int bottomBunInput;
   int bellInput;
 
+  // Variables used for the control of program.
   int randNumber;
   bool orderCorrect;
 
-
+  // Variables for the player and order vectors.
   int order[maxBurgerSize];
   int previousIngredients[numIngredients];
   int playerOrder[maxBurgerSize];
   int ing;
-  bool winFlag;
   int len;
 
-
+  // Private functions to read if ingredients have been read.
   bool checkPatty();
   bool checkCheese();
   bool checkTomato();
@@ -96,7 +99,7 @@ public:
 
 PlateIt::PlateIt(int plateItBottomBun, int plateItTopBun, int plateItBell, int neoPixelLED0, int neoPixelLED1, int neoPixelLEDCount) {
 
-
+  // Assign RGB values.
   BunRGB = strip_order.Color(255, 50, 0);
   PattyRGB = strip_order.Color(255, 255, 255);
   LettuceRGB = strip_order.Color(30, 255, 0);
@@ -110,6 +113,7 @@ PlateIt::PlateIt(int plateItBottomBun, int plateItTopBun, int plateItBell, int n
   resPin2 = A2;
   resPin3 = A3;
 
+  // Initialize all analog values.
   Patty = 0;
   Cheese = 0;
   Tomato = 0;
@@ -118,6 +122,7 @@ PlateIt::PlateIt(int plateItBottomBun, int plateItTopBun, int plateItBell, int n
   BottomBun = 0;
   TopBun = 0;
 
+  // Initialize all counts to zero
   pattyCount = 0;
   cheeseCount = 0;
   tomatoCount = 0;
@@ -126,26 +131,26 @@ PlateIt::PlateIt(int plateItBottomBun, int plateItTopBun, int plateItBell, int n
   bottomBunCount = 0;
   topBunCount = 0;
 
+  // Set digital input pin values.
   bottomBunInput = plateItBottomBun;
   topBunInput = plateItTopBun;
   bellInput = plateItBell;
 
   orderCorrect = false;
-
+  randNumber = 0;
 
   ing = 0;
-  winFlag = 1;
-  len = 7;
+  len = 0;
 
-
+  // Initialize player order to zero.
   for (int i = 0; i < maxBurgerSize; i++) {
     playerOrder[i] = -1;
   }
 }
 
 void PlateIt::initialize() {
-  // Initialize Plate-It NeoPixels
-
+  
+  // Initialize Plate-It NeoPixels to off.
   strip_order.begin();
   for (int i = 0; i < maxBurgerSize; i++) {
     strip_order.Color(0, 0, 0);
@@ -160,10 +165,12 @@ void PlateIt::initialize() {
   strip_player.show();  // Initialize all pixels to 'off'
   strip_player.setBrightness(50);
 
+  // Initialize previous ingredients to null.
   for (int i = 0; i < maxBurgerSize-2; i++){
     previousIngredients[i] = -1;
   }
 
+  // Start ADS extender.
   ADS.begin();
   ADS.setGain(0);
 }
@@ -171,7 +178,7 @@ void PlateIt::initialize() {
 
 void PlateIt::generateNewBurger(int burgerSizeTotal){
 
-
+  // Store new length of burger.
   len = burgerSizeTotal;
 
   // First clear previous order
@@ -184,7 +191,7 @@ void PlateIt::generateNewBurger(int burgerSizeTotal){
 
   int currentSizeIngredients = 0;
   bool increment = true;
-  // Loop through size-2 because the top and bottom bun have set positions.
+  // Loop through burgerSizeTotal-2 because the top and bottom bun have set positions.
   while (currentSizeIngredients < burgerSizeTotal-2){
     
     // Generate random nubmer to select ingredient.
@@ -192,9 +199,9 @@ void PlateIt::generateNewBurger(int burgerSizeTotal){
     
     increment = true;
     // If this is not the first ingredient, then make sure it has not been placed before.
-    // If this ingredient has been placed before, then it will not be placed again and
-    // another ingredient will be chosen.
-    // Must also adhere to a couple of rules: 1) lettuce and cheese cannot be adjacent to each other
+    // If this ingredient has been placed before, then it will not be placed again and another ingredient will be chosen.
+    // Must also adhere to a couple of rules: 
+    // 1) lettuce and cheese cannot be adjacent to each other
     // 2) The following combintation is not allowed: lettuce - onion - cheese
     if (currentSizeIngredients != 0){
       
@@ -210,13 +217,13 @@ void PlateIt::generateNewBurger(int burgerSizeTotal){
       // 1) lettuce - cheese
       // 2) cheese - lettuce
       // 3) lettuc - onion - cheese
-      // If the order length is maximum (maxBurgerSize), and on of the forbidden combinations occurs,
-      // then have to push back the currentSizeIngredients counter to allow for recalculation
+      // If the order length is maximum (maxBurgerSize), and one of the forbidden combinations occurs,
+      // then have to recalculate the entire burger (technically don't HAVE to but that's what I did).
       if ((randNumber == lettuceID)){
         if (previousIngredients[currentSizeIngredients-1] == cheeseID){
           increment = false;
 
-          // Force algorithm to recalculate the burger order.
+          // Force algorithm to recalculate the burger order if need be.
           if ((burgerSizeTotal == maxBurgerSize) && (currentSizeIngredients == numIngredients-1)){
             currentSizeIngredients = 0;
           }
@@ -226,7 +233,7 @@ void PlateIt::generateNewBurger(int burgerSizeTotal){
         if (previousIngredients[currentSizeIngredients-1] == lettuceID){
           increment = false;
 
-          // Force algorithm to recalculate the burger order.
+          // Force algorithm to recalculate the burger order if need be.
           if ((burgerSizeTotal == maxBurgerSize) && (currentSizeIngredients == numIngredients-1)){
             currentSizeIngredients = 0;
           }
@@ -234,31 +241,32 @@ void PlateIt::generateNewBurger(int burgerSizeTotal){
         else if ((currentSizeIngredients >= 2) && (previousIngredients[currentSizeIngredients-1] == onionID) && (previousIngredients[currentSizeIngredients-2] == lettuceID)){
           increment = false;
 
-          // Force algorithm to recalculate the burger order.
+          // Force algorithm to recalculate the burger order if need be.
           if ((burgerSizeTotal == maxBurgerSize) && (currentSizeIngredients == numIngredients-1)){
             currentSizeIngredients = 0;
           }
         }
       }
-
-      
     }
     
     // Decide whether or not to increment to the next ingredient.
     if (increment == true){
       previousIngredients[currentSizeIngredients] = randNumber;
-      order[1+currentSizeIngredients] = randNumber;
+      order[1+currentSizeIngredients] = randNumber;      // Need to add one to index because the bottom bun has been pre-placed. 
       currentSizeIngredients++;
     }
   }
 
+  // Place top bun.
   order[burgerSizeTotal-1] = topBunID;
-
 
   orderDisplay(order, burgerSizeTotal);
 } 
 
-
+// Running Plate-It
+// If no input recieved, return 0
+// If ingredient placed, return 1
+// If bell rang, return 2
 int PlateIt::plateItNormal() {
 
   int returnVal = 0;
@@ -300,7 +308,9 @@ int PlateIt::plateItNormal() {
   return returnVal;
 }
 
-
+// Force player to disassemble burger.
+// If ingredients still left, return 0
+// If all ingredients removed, return 1
 bool PlateIt::disassembleBurger(){
 
   bool returnValue = false;
@@ -312,8 +322,6 @@ bool PlateIt::disassembleBurger(){
   checkBottomBun();
   checkLettuce();
 
-  delay(50);
-
   if (ing == 0){
     returnValue = true;
   }
@@ -324,7 +332,9 @@ bool PlateIt::disassembleBurger(){
   return returnValue;
 }
 
-
+// Compare order to the player's burger.
+// If player = order, return true
+// If play != order, return false
 bool PlateIt::compareOrderToPlayer(){
 
   orderCorrect = true;
@@ -338,6 +348,10 @@ bool PlateIt::compareOrderToPlayer(){
   
 }
 
+// Check function for patty
+// If detected placement, return true
+// If detected a removal, return true
+// false otherwise
 bool PlateIt::checkPatty() {
 
   bool readInput = 0;
@@ -368,6 +382,10 @@ bool PlateIt::checkPatty() {
   return readInput;
 }
 
+// Check function for cheese
+// If detected placement, return true
+// If detected a removal, return true
+// false otherwise
 bool PlateIt::checkCheese() {
   bool readInput = 0;
   // Cheese
@@ -398,6 +416,10 @@ bool PlateIt::checkCheese() {
   return readInput;
 }
 
+// Check function for tomato
+// If detected placement, return true
+// If detected a removal, return true
+// false otherwise
 bool PlateIt::checkTomato() {
   bool readInput = 0;
   // Tomato
@@ -428,6 +450,10 @@ bool PlateIt::checkTomato() {
   return readInput;
 }
 
+// Check function for onion
+// If detected placement, return true
+// If detected a removal, return true
+// false otherwise
 bool PlateIt::checkOnion() {
   bool readInput = 0;
   // Onions
@@ -458,7 +484,10 @@ bool PlateIt::checkOnion() {
   return readInput;
 }
 
-
+// Check function for lettuce
+// If detected placement, return true
+// If detected a removal, return true
+// false otherwise
 bool PlateIt::checkLettuce() {
   bool readInput = 0;
   // Lettuce
@@ -489,7 +518,10 @@ bool PlateIt::checkLettuce() {
   return readInput;
 }
 
-
+// Check function for bottom bun
+// If detected placement, return true
+// If detected a removal, return true
+// false otherwise
 bool PlateIt::checkBottomBun() {
   // BottomBun
   int readInput = 0;
@@ -513,7 +545,10 @@ bool PlateIt::checkBottomBun() {
   return readInput;
 }
 
-
+// Check function for top bun
+// If detected placement, return true
+// If detected a removal, return true
+// false otherwise
 bool PlateIt::checkTopBun() {
   // TopBun
   int readInput = 0;
@@ -536,6 +571,9 @@ bool PlateIt::checkTopBun() {
   return readInput;
 }
 
+// Check function for bell
+// If detected ring, return true
+// false otherwise
 bool PlateIt::checkBell() {
   // Bell
   int readInput = 0;
@@ -546,7 +584,7 @@ bool PlateIt::checkBell() {
   return readInput;
 }
 
-
+// Display the burger order.
 void PlateIt::orderDisplay(int arr[], int len) {
 
   for (int i = 0; i < maxBurgerSize; i++) {
@@ -597,12 +635,29 @@ void PlateIt::orderDisplay(int arr[], int len) {
   }
 }
 
+// Reset.
 void PlateIt::resetPlateIt(){
   
   for (int i = 0; i < maxBurgerSize; i++) {
     strip_player.Color(0, 0, 0);
   }
   strip_player.show();
+
+  Patty = 0;
+  Cheese = 0;
+  Tomato = 0;
+  Onions = 0;
+  Lettuce = 0;
+  BottomBun = 0;
+  TopBun = 0;
+
+  pattyCount = 0;
+  cheeseCount = 0;
+  tomatoCount = 0;
+  onionCount = 0;
+  lettuceCount = 0;
+  bottomBunCount = 0;
+  topBunCount = 0;
 
 }
 

@@ -62,7 +62,7 @@ int previousStateDT;
 
 // Needed classes.
 MP3Player mp3(10,11);  //MP3 Player
-ChopIt chopItInstance   = ChopIt(chopItInput, requiredNumChops);
+ChopIt chopItInstance   = ChopIt(chopItInput);
 CookIt cookItInstance   = CookIt(cookItButton, cookItEncoderDT, cookItEncoderClk);
 PlateIt plateItInstance = PlateIt(plateItBottomBun, plateItTopBun, plateItmp3_bell, plateItNeoPixelLED0, plateItNeoPixelLED1, plateItNeoPixelLEDCount);
 Adafruit_SSD1306 display = Adafruit_SSD1306(128, 32, &WIRE);  // OLED
@@ -296,6 +296,7 @@ void loop() {
           right = true;
           leaveLoop = 1;
         }
+        delay(50);
 
         // Measure the current time and determing if the user is taking too long to complete the action.
         endTime = millis();
@@ -347,6 +348,7 @@ void loop() {
           if (returnNumber != 0){
             leaveLoop = 1;
           }
+          delay(50);
 
           // Measure the current time and determing if the user is taking too long to complete the action.
           endTime = millis();

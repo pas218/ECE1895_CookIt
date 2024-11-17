@@ -1,31 +1,24 @@
 // Chop It class
 
-
 class ChopIt
 {
   private:
 
-    int numChops;
-    int sensorVal;
-    int requiredNumChops;
+    // State variables.
     int previousValue;
-
     int chopItInput;
     int returnVal;
 
   public:
 
-    ChopIt(int chopItInput, int requiredNumChops);
+    ChopIt(int chopItInput);
     int runChopIt();
 
     void resetChopIt();
 };
 
-ChopIt::ChopIt(int chopItInput, int requiredNumChops)
+ChopIt::ChopIt(int chopItInput)
 {
-  //numChops = 0;
-  //chopItInput = 5;
-  requiredNumChops = requiredNumChops;
   returnVal = 0;
   previousValue = HIGH;
 }
@@ -33,14 +26,7 @@ ChopIt::ChopIt(int chopItInput, int requiredNumChops)
 int ChopIt::runChopIt()
 {
 
-
- 
-
-  // Read the value of the digital input associated with Chop-It.
-  //sensorVal = digitalRead(chopItInput);
-  //sensorVal = HIGH;
-  // If the digital input is low (meaning the knife has been used to complete the circuit),
-  // turn off the LED to signify that the input has been read and break from the infinite loop.
+  // Increase the number of chops if the knife went from "unchopped" to "chopped."
   if ((digitalRead(5) == LOW) && (previousValue == HIGH)){
 
       returnVal++;; 
