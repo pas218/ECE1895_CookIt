@@ -6,11 +6,13 @@ class Misc
 
     int score;
     int lives;
+    int scoreResetHolder;
+    int livesResetHolder;
     bool buttonPressed;
     
     // Neopixels to keep track of lives and show fire when doing Cook-It
-    Adafruit_NeoPixel strip_lives = Adafruit_NeoPixel(8, 1, NEO_GRB + NEO_KHZ800);   // lives
-    Adafruit_NeoPixel strip_fire = Adafruit_NeoPixel(8, 2, NEO_GRB + NEO_KHZ800);    // fire
+    //Adafruit_NeoPixel strip_lives = Adafruit_NeoPixel(8, 1, NEO_GRB + NEO_KHZ800);   // lives
+    //Adafruit_NeoPixel strip_fire = Adafruit_NeoPixel(8, 2, NEO_GRB + NEO_KHZ800);    // fire
     int startButtonInput;
 
     int sizeFire;
@@ -27,8 +29,10 @@ class Misc
     Misc(int startScore, int startLives, int startbuttonInput);
     bool increaseScore();
     int getScore();
+    void resetScore();
     void decreaseLives();
     int getLives();
+    void resetLives();
     void turnOnFire();
     void turnOffFire();
     bool startButtonPressed();
@@ -37,13 +41,18 @@ class Misc
 
 Misc::Misc(int startScore, int startLives, int startbuttonInput){
   
-  score = startScore;
-  lives = startLives;
+  livesResetHolder = startLives;
+  scoreResetHolder  = startScore;
+  lives = livesResetHolder;
+  score = scoreResetHolder;
+  
+  
   buttonPressed = false;
 
   // Get variables for lives/scores and their neopixels
   sizeFire = 8;
   sizeLives = 3;
+  /*
   redRGB    = strip_fire.Color(255, 0, 0);
   yellowRGB = strip_fire.Color(255, 200, 0);
   orangeRGB = strip_fire.Color(255, 255, 255);
@@ -64,7 +73,7 @@ Misc::Misc(int startScore, int startLives, int startbuttonInput){
   }
   strip_fire.show();  // Initialize all pixels to 'off'
   strip_fire.setBrightness(50);
-
+*/
 
 }
 
@@ -85,10 +94,15 @@ int Misc::getScore(){
   return score;
 }
 
+void Misc::resetScore(){
+  score = scoreResetHolder;
+}
+
 // Decrease lives and output the lives to the neopixels.
 void Misc::decreaseLives(){
   lives = lives - 1;
 
+/*
   for (int i = 0; i < sizeLives; i++) {
     if (i < lives){
       strip_lives.setPixelColor(i, redRGB);
@@ -96,13 +110,17 @@ void Misc::decreaseLives(){
     else{
       strip_lives.setPixelColor(i, blankRGB);
     }
-  }
+  }*/
 }
 
 int Misc::getLives(){
   return lives;
 }
 
+void Misc::resetLives(){
+  lives = livesResetHolder;;
+}
+/*
 void Misc::turnOnFire(){
 
   strip_fire.setPixelColor(0, yellowRGB);
@@ -122,9 +140,9 @@ void Misc::turnOffFire(){
   }
   strip_fire.show();
 }
-
+*/
 bool Misc::startButtonPressed(){
-  if(digitalRead(startButtonInput) == HIGH){
+  if(digitalRead(9) == HIGH){
     return true;
   }
   else{

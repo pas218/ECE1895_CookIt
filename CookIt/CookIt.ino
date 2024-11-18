@@ -83,7 +83,7 @@ long randNumber;
 
 
 // Variables for program control.
-bool right = false;
+int increment = 0;
 int leaveLoop = 0;
 int returnNumber = 0;
 int totalScore = 0;
@@ -96,7 +96,10 @@ bool playGame = false;
 // Variables for keeping track of time (mostly using the millis() function).
 unsigned long startTime = 0;
 unsigned long endTime = 0;
-unsigned long timePerFunction = 10000;  // This is the amound of time in miliseconds that a player is allowed to take to complete an input.
+unsigned long timePerFunctionChopIt = 10000;  // This is the amound of time in miliseconds that a player is allowed to take to complete an input.
+unsigned long timePerFunctionCookIt = 10000;
+unsigned long timePerFunctionPlateIt = 10000;
+unsigned long timePerFunctionDisassembleIt = 10000;
 bool tooLong = false;
 
 
@@ -152,8 +155,9 @@ void setup() {
 
 void loop() {
 
+  
   mp3.playTrackNumber(mp3_sayPressStartToProceed, 15);
-  delay(100);
+  delay(1000);
 
   while(!playGame){
     if (misc.startButtonPressed() == true){
@@ -166,43 +170,46 @@ void loop() {
   delay(100);
 
 
+  // Get starting information.
+  // Get total score and set burger size.
+  totalScore = misc.getScore();
+  if ((totalScore >= 0) && (totalScore < 20)) {
+    burgerSize = 3;
+  } else if ((totalScore >= 20) && (totalScore < 40)) {
+    burgerSize = 4;
+  } else if ((totalScore >= 40) && (totalScore < 60)) {
+    burgerSize = 5;
+  } else if ((totalScore >= 60) && (totalScore < 80)) {
+    burgerSize = 6;
+  } else if (totalScore >= 80) {
+    burgerSize = 7;
+  }
+
+  // Display score.
+  totalLives = misc.getLives();
+  display.clearDisplay();
+  display.display();
+  display.setCursor(0, 0);
+  display.print("Score: ");
+  display.println(totalScore);
+  display.print(totalLives);
+  display.setCursor(0, 0);
+  display.display();
+
   // Enter while loop to start the game.
   while (playGame) {
 
     delay(500);
 
-    // Get total score and set burger size.
-    totalScore = misc.getScore();
-    if ((totalScore >= 0) && (totalScore < 20)) {
-      burgerSize = 3;
-    } else if ((totalScore >= 20) && (totalScore < 40)) {
-      burgerSize = 4;
-    } else if ((totalScore >= 40) && (totalScore < 60)) {
-      burgerSize = 5;
-    } else if ((totalScore >= 60) && (totalScore < 80)) {
-      burgerSize = 6;
-    } else if (totalScore >= 80) {
-      burgerSize = 7;
-    }
-
-    // Display score.
-    totalLives = misc.getLives();
-    display.clearDisplay();
-    display.display();
-    display.setCursor(0, 0);
-    display.print("Score: ");
-    display.println(totalScore);
-    display.print(totalLives);
-    display.setCursor(0, 0);
-    display.display();
+    
 
     // 0-19 = Chop-It, 20-39 = Cook-it, 40-59 = Plate-it
     randNumber = random(0, 60);
-    //randNumber =  2;
+    //randNumber =  10;
 
     // Initialize all control variables to base values.
     leaveLoop = 0;
-    right = false;
+    increment = 0;
     returnNumber = 0;
     tooLong = false;
 
@@ -224,15 +231,15 @@ void loop() {
         // Run chop it. The return value will be the current number of chops that have been done.
         returnNumber = chopItInstance.runChopIt();
         if (returnNumber >= requiredNumChops) {
-          right = true;
+          increment = 1;
           leaveLoop = 1;
         }
         delay(50);
 
         // Measure the current time and determing if the user is taking too long to complete the action.
         endTime = millis();
-        if ((endTime - startTime) >= timePerFunction) {
-          right = false;
+        if ((endTime - startTime) >= timePerFunctionChopIt) {
+          increment = 0;
           leaveLoop = 1;
         }
       }
@@ -240,7 +247,7 @@ void loop() {
 
       // After exiting the while loop, determine which sound effect to play, depending
       // on how the player performed previously.
-      if (right == true) {
+      if (increment != 0) {
 
         mp3.playTrackNumber(mp3_sayGoodJob, 15);
       } else {
@@ -268,8 +275,8 @@ void loop() {
         delay(50);
         // Measure the current time and determing if the user is taking too long to complete the action.
         endTime = millis();
-        if ((endTime - startTime) >= timePerFunction) {
-          right = false;
+        if ((endTime - startTime) >= timePerFunctionCookIt/2) {
+          increment = 0;
           leaveLoop = 1;
           tooLong = true;
         }
@@ -284,13 +291,13 @@ void loop() {
         returnNumber = cookItInstance.runCookItEncoder();
         if (returnNumber >= requiredCookItMoves) {
           leaveLoop = 1;
-          right = true;
+          increment = 1;
         }
 
         // Measure the current time and determing if the user is taking too long to complete the action.
         endTime = millis();
-        if ((endTime - startTime) >= timePerFunction) {
-          right = false;
+        if ((endTime - startTime) >= timePerFunctionCookIt/2) {
+          increment = 0;
           leaveLoop = 1;
           tooLong = true;
         }
@@ -299,7 +306,7 @@ void loop() {
 
       // After exiting the while loop, determine which sound effect to play,
       // depending on how the player performed previously.
-      if (right == true) {
+      if (increment != 0) {
         mp3.playTrackNumber(mp3_sayGoodJob, 15);
       } else {
         mp3.playTrackNumber(mp3_sayYouSuck, 15);
@@ -323,15 +330,15 @@ void loop() {
         // The return will be 2 if the bell has been rung. Otherwise the return will be 0.
         returnNumber = plateItInstance.plateItNormal();
         if (returnNumber == 2) {
-          right = true;
+          increment = 1;
           leaveLoop = 1;
         }
         delay(50);
 
         // Measure the current time and determing if the user is taking too long to complete the action.
         endTime = millis();
-        if ((endTime - startTime) >= timePerFunction) {
-          right = false;
+        if ((endTime - startTime) >= timePerFunctionPlateIt) {
+          increment = 0;
           leaveLoop = 1;
         }
       }
@@ -339,7 +346,7 @@ void loop() {
       // After exiting the while loop, determine which sound effect to play,
       // depending on how the player performed previously.
       // INCORRECT INPUT
-      if (right == false) {
+      if (increment == 0) {
         mp3.playTrackNumber(mp3_sayYouSuck, 15);
       }
 
@@ -384,8 +391,8 @@ void loop() {
 
           // Measure the current time and determing if the user is taking too long to complete the action.
           endTime = millis();
-          if ((endTime - startTime) >= timePerFunction) {
-            right = false;
+          if ((endTime - startTime) >= timePerFunctionDisassembleIt) {
+            increment = 0;
             leaveLoop = 1;
           }
         }
@@ -393,7 +400,7 @@ void loop() {
 
         // After exiting the while loop, determine which sound effect to play,
         // depending on how the player performed previously.
-        if (right == true) {
+        if (increment != 0) {
           mp3.playTrackNumber(mp3_sayGoodJob, 15);
         } else {
           mp3.playTrackNumber(mp3_sayYouSuck, 15);
@@ -409,11 +416,44 @@ void loop() {
     plateItInstance.resetPlateIt();
 
     // Increase total score.
-    if (right == 1) {
+    if (increment == 1) {
       misc.increaseScore();
     } else {
       misc.decreaseLives();
     }
+
+    // Get total score and set burger size.
+    totalScore = misc.getScore();
+    if ((totalScore >= 0) && (totalScore < 20)) {
+      burgerSize = 3;
+    } else if ((totalScore >= 20) && (totalScore < 40)) {
+      burgerSize = 4;
+    } else if ((totalScore >= 40) && (totalScore < 60)) {
+      burgerSize = 5;
+    } else if ((totalScore >= 60) && (totalScore < 80)) {
+      burgerSize = 6;
+    } else if (totalScore >= 80) {
+      burgerSize = 7;
+    }
+
+    // Decrease allowed time per function.
+    if ((totalScore % 10 == 0) && (totalScore != 0)) {
+      timePerFunctionChopIt = timePerFunctionChopIt - 75;
+      timePerFunctionCookIt = timePerFunctionCookIt - 75;
+      timePerFunctionPlateIt = timePerFunctionPlateIt - 75;
+      timePerFunctionDisassembleIt = timePerFunctionDisassembleIt - 75;
+    } 
+
+    // Display score.
+    totalLives = misc.getLives();
+    display.clearDisplay();
+    display.display();
+    display.setCursor(0, 0);
+    display.print("Score: ");
+    display.println(totalScore);
+    display.print(totalLives);
+    display.setCursor(0, 0);
+    display.display();
 
     // Check if user is out of lives
     if (misc.getLives() == 0){
