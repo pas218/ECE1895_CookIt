@@ -77,7 +77,7 @@ private:
 
   // Private functions to read if ingredients have been read.
   bool checkPatty();
-  bool checkCheese();
+  
   bool checkTomato();
   bool checkOnion();
   bool checkLettuce();
@@ -86,6 +86,8 @@ private:
   bool checkBell();
 
 public:
+  int checkCheeseCheck();
+  bool checkCheese();
   PlateIt(int plateItBottomBun, int plateItTopBun, int plateItBell, int neoPixelLED0, int neoPixelLED1, int neoPixelLEDCount);
   void initialize();
   void generateNewBurger(int burgerSizeTotal);  //This burger size includes the buns.
@@ -273,7 +275,7 @@ int PlateIt::plateItNormal() {
 
   int returnVal = 0;
   bool checker;
-
+/*
   checker = checkPatty();
   if (checker == 1) {
     returnVal = 1;
@@ -301,7 +303,7 @@ int PlateIt::plateItNormal() {
   checker = checkLettuce();
   if (checker == 1) {
     returnVal = 1;
-  }
+  }*/
   checker = checkBell();
   if (checker == 1) {
     returnVal = 2;
@@ -416,6 +418,14 @@ bool PlateIt::checkCheese() {
   }
 
   return readInput;
+}
+
+
+int PlateIt::checkCheeseCheck() {
+
+  Cheese = analogRead(resPin1);
+
+  return Cheese;
 }
 
 // Check function for tomato
