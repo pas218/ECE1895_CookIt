@@ -49,6 +49,8 @@ private:
   int BottomBun;
   int TopBun;
   int Bell;
+  int pattyChopIt;
+  int pattyCookIt;
 
   // Count variables for all ingredients.
   int pattyCount;
@@ -66,7 +68,7 @@ private:
 
   // Variables used for the control of program.
   int randNumber;
-  bool orderCorrect;
+  int orderCorrect;
 
   // Variables for the player and order vectors.
   int order[maxBurgerSize];
@@ -77,7 +79,7 @@ private:
 
   // Private functions to read if ingredients have been read.
   bool checkPatty();
-  
+  bool checkCheese();
   bool checkTomato();
   bool checkOnion();
   bool checkLettuce();
@@ -86,14 +88,16 @@ private:
   bool checkBell();
 
 public:
-  int checkCheeseCheck();
-  bool checkCheese();
   PlateIt(int plateItBottomBun, int plateItTopBun, int plateItBell, int neoPixelLED0, int neoPixelLED1, int neoPixelLEDCount);
   void initialize();
   void generateNewBurger(int burgerSizeTotal);  //This burger size includes the buns.
+  void generateNewBurgerSimplified();
   int plateItNormal();
+  int plateItQuickCheck();
+  bool checkPattyChopIt();
+  bool checkPattyCookIt();
   bool disassembleBurger();
-  bool compareOrderToPlayer();
+  int compareOrderToPlayer();
   int returnPattySpot();
   bool forceDisassemble();
   void orderDisplay(int arr[], int len);
@@ -125,6 +129,8 @@ PlateIt::PlateIt(int plateItBottomBun, int plateItTopBun, int plateItBell, int n
   Lettuce = 0;
   BottomBun = 0;
   TopBun = 0;
+  pattyChopIt = 0;
+  pattyCookIt = 0;
 
   // Initialize all counts to zero
   pattyCount = 0;
@@ -267,6 +273,14 @@ void PlateIt::generateNewBurger(int burgerSizeTotal){
   orderDisplay(order, burgerSizeTotal);
 } 
 
+void PlateIt::generateNewBurgerSimplified(){
+  len = 3;
+  order[0] = bottomBunID;
+  order[1] = pattyID;
+  order[2] = topBunID;
+  orderDisplay(order, len);
+}
+
 // Running Plate-It
 // If no input recieved, return 0
 // If ingredient placed, return 1
@@ -275,12 +289,16 @@ int PlateIt::plateItNormal() {
 
   int returnVal = 0;
   bool checker;
-/*
+
+  checker = checkBottomBun();
+  if (checker == 1) {
+    returnVal = 1;
+  }
   checker = checkPatty();
   if (checker == 1) {
     returnVal = 1;
   }
-  checker = checkCheese();
+  /*checker = checkCheese();
   if (checker == 1) {
     returnVal = 1;
   }
@@ -291,15 +309,12 @@ int PlateIt::plateItNormal() {
   checker = checkOnion();
   if (checker == 1) {
     returnVal = 1;
-  }
+  }*/
   checker = checkTopBun();
   if (checker == 1) {
     returnVal = 1;
   }
-  checker = checkBottomBun();
-  if (checker == 1) {
-    returnVal = 1;
-  }
+  /*
   checker = checkLettuce();
   if (checker == 1) {
     returnVal = 1;
@@ -311,6 +326,84 @@ int PlateIt::plateItNormal() {
 
   return returnVal;
 }
+
+int PlateIt::plateItQuickCheck(){
+
+  int returnVal = 0;
+  bool checker;
+
+  checker = checkPatty();
+  if (checker == 1) {
+    returnVal = 1;
+  }
+  /*checker = checkCheese();
+  if (checker == 1) {
+    returnVal = 1;
+  }
+  checker = checkTomato();
+  if (checker == 1) {
+    returnVal = 1;
+  }
+  checker = checkOnion();
+  if (checker == 1) {
+    returnVal = 1;
+  }*/
+  checker = checkTopBun();
+  if (checker == 1) {
+    returnVal = 1;
+  }
+  /*
+  checker = checkLettuce();
+  if (checker == 1) {
+    returnVal = 1;
+  }*/
+  checker = checkBell();
+  if (checker == 1) {
+    returnVal = 2;
+  }
+
+  return returnVal;
+}
+
+
+
+bool PlateIt::checkPattyChopIt(){
+  bool readInput = 0;
+  // Patty Chop It
+  pattyChopIt = analogRead(resPin1);
+  if (pattyChopIt < 800){
+    strip_player.setPixelColor(0, PattyRGB);
+    strip_player.show();
+    readInput = 1;
+  }
+  else{ 
+    strip_player.setPixelColor(0, BlankRGB);
+    strip_player.show();
+    readInput = 0;
+  }
+
+
+  return readInput;
+}
+
+bool PlateIt::checkPattyCookIt(){
+  bool readInput = 0;
+  // Patty Chop It
+  pattyCookIt = analogRead(resPin2);
+  if (pattyCookIt < 800){
+    strip_player.setPixelColor(0, PattyRGB);
+    strip_player.show();
+    readInput = 1;
+  }
+  else{ 
+    strip_player.setPixelColor(0, BlankRGB);
+    strip_player.show();
+    readInput = 0;
+  }
+
+  return readInput;
+}
+
 
 // Force player to disassemble burger.
 // If ingredients still left, return 0
@@ -339,17 +432,17 @@ bool PlateIt::disassembleBurger(){
 // Compare order to the player's burger.
 // If player = order, return true
 // If play != order, return false
-bool PlateIt::compareOrderToPlayer(){
+int PlateIt::compareOrderToPlayer(){
 
-  orderCorrect = true;
+  orderCorrect = 1;
 
   for (int i = 0; i < len; i++){
     if (order[i] != playerOrder[i]){
-      orderCorrect = false;
+      orderCorrect = 0;
       break;
     }
   }
-  
+  return orderCorrect;
 }
 
 // Check function for patty
@@ -360,7 +453,7 @@ bool PlateIt::checkPatty() {
 
   bool readInput = 0;
   Patty = analogRead(resPin0);
-  if (Patty >= 400 && Patty < 525 && pattyCount == 0) {
+  if (Patty >= 400 && Patty < 800 && pattyCount == 0) {
     playerOrder[ing] = 0;
     strip_player.setPixelColor(ing, PattyRGB);
     strip_player.show();
@@ -418,14 +511,6 @@ bool PlateIt::checkCheese() {
   }
 
   return readInput;
-}
-
-
-int PlateIt::checkCheeseCheck() {
-
-  Cheese = analogRead(resPin1);
-
-  return Cheese;
 }
 
 // Check function for tomato
@@ -613,7 +698,7 @@ bool PlateIt::forceDisassemble(){
 void PlateIt::orderDisplay(int arr[], int len) {
 
   for (int i = 0; i < maxBurgerSize; i++) {
-    strip_order.Color(0, 0, 0);
+    strip_order.setPixelColor(i, BlankRGB);
   }
   strip_order.show();
 
@@ -621,38 +706,38 @@ void PlateIt::orderDisplay(int arr[], int len) {
     int ing = arr[i];
     switch (ing) {
       // Patty
-      case 0:
+      case pattyID:
         strip_order.setPixelColor(i, PattyRGB);
       
         break;
 
       // Cheese
-      case 1:
+      case cheeseID:
         strip_order.setPixelColor(i, CheeseRGB);
         break;
 
       // Tomato
-      case 2:
+      case tomatoID:
         strip_order.setPixelColor(i, TomatoRGB);
         break;
 
       // Onion
-      case 3:
+      case onionID:
         strip_order.setPixelColor(i, OnionRGB);
         break;
 
       // Lettuce
-      case 4:
+      case lettuceID:
         strip_order.setPixelColor(i, LettuceRGB);
         break;
 
       // BottomBun
-      case 5:
+      case bottomBunID:
         strip_order.setPixelColor(i, BunRGB);
         break;
 
       // TopBun
-      case 6:
+      case topBunID:
         strip_order.setPixelColor(i, BunRGB);
         break;
     }
@@ -663,10 +748,19 @@ void PlateIt::orderDisplay(int arr[], int len) {
 // Reset.
 void PlateIt::resetPlateIt(){
   
+
   for (int i = 0; i < maxBurgerSize; i++) {
-    strip_player.Color(0, 0, 0);
+    strip_order.setPixelColor(i, BlankRGB);
   }
   strip_player.show();
+
+  for (int i = 0; i < maxBurgerSize; i++) {
+    strip_player.setPixelColor(i, BlankRGB);
+    playerOrder[i] = -1;
+  }
+  strip_player.show();
+
+  ing = 0;
 
   Patty = 0;
   Cheese = 0;

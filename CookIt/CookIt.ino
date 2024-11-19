@@ -89,7 +89,6 @@ long randNumber;
 // Variables for program control.
 int increment = 0;
 int leaveLoop = 0;
-int returnNumber = 0;
 int totalScore = 0;
 int totalLives = 0;
 bool correctOrder = false;
@@ -97,16 +96,20 @@ int burgerSize = 3;
 bool playGame = false;
 bool returnBool = false;
 bool goToFunction = false;
-int wrong = false;
-int ha = false;
+int returnNumber = 0;
+int returnChopIt = 0;
+int returnCookIt = 0;
+int returnPlateIt = 0;
+bool returnCookItPatty = 0;
+bool returnChopItPatty = 0;
 bool skip = false;
 
 // Variables for keeping track of time (mostly using the millis() function).
 unsigned long startTime = 0;
 unsigned long endTime = 0;
-unsigned long timePerFunctionChopIt = 15000;  // This is the amound of time in miliseconds that a player is allowed to take to complete an input.
-unsigned long timePerFunctionCookIt = 15000;
-unsigned long timePerFunctionPlateIt = 15000;
+unsigned long timePerFunctionChopIt = 17500;  // This is the amound of time in miliseconds that a player is allowed to take to complete an input.
+unsigned long timePerFunctionCookIt = 17500;
+unsigned long timePerFunctionPlateIt = 17500;
 unsigned long timePerFunctionDisassembleIt = 15000;
 bool tooLong = false;
 
@@ -124,7 +127,8 @@ void setup() {
   display.display();
 
   // text display tests
-  display.setTextSize(2);
+  //display.setTextSize(2);
+  display.setTextSize(0);
   display.setTextColor(SSD1306_WHITE);
   display.display();  // This will end up being blank.
 ///// END SCREEN INITIALIZATIONS /////
@@ -154,6 +158,7 @@ void setup() {
   ///// MP3 INITIALIZATION
   mp3.initialize();
 
+
   ///// GENERATE RANDOM SEED /////
   randomSeed(analogRead(0));
 
@@ -163,10 +168,24 @@ void setup() {
 
 void loop() {
 
+  while(0){
+    returnCookIt = analogRead(A0);
+    returnChopIt = digitalRead(3);
+    returnPlateIt = digitalRead(4);
+    display.clearDisplay();
+    display.display();
+    display.setCursor(0, 0);
+    display.println(returnChopIt);
+    display.println(returnCookIt);
+    display.print(returnPlateIt);
+    display.setCursor(0, 0);
+    display.display();
+    delay(1000);
+  }
+
 
   mp3.playTrackNumber(mp3_sayPressStartToProceed, 25);
-  //mp3.playTrackNumber(2, 25);
-  delay(1000);
+  delay(900);
 
   while(!playGame){
     if (misc.startButtonPressed() == true){
@@ -211,13 +230,10 @@ void loop() {
   // Enter while loop to start the game.
   while (playGame) {
 
-    delay(500);
-
-    
-
+    delay(1500);
     // 0-19 = Chop-It, 20-39 = Cook-it, 40-59 = Plate-it
     randNumber = random(0, 60);
-    //randNumber =  50;
+    //randNumber =  30;
 
     // Initialize all control variables to base values.
     leaveLoop = 0;
@@ -226,9 +242,12 @@ void loop() {
     tooLong = false;
     goToFunction = false;
     returnBool = false;
-    wrong = 0;
-    ha = 0;
     skip = false;
+    returnChopIt = 0;
+    returnCookIt = 0;
+    returnPlateIt = 0;
+    returnCookItPatty = false;
+    returnChopItPatty = false;
 
     // Get starting time to compare time passed later.
     startTime = millis();
@@ -238,55 +257,43 @@ void loop() {
     if ((randNumber >= 0) && (randNumber < 20)) {
 
       mp3.playTrackNumber(mp3_callChopIt, 25);
-      delay(2000);
+      delay(1500);
 
       // Check for Chop-It input and time spent waiting for input.
       // Exits if either 1) the correct Chop-It input is recieved or
       // 2) The user takes too long to "Chop-It"
       while (leaveLoop == 0) {
         
-        // Read if the button has been pressed. Return 1 if there is a press, 0 otherwise.
-        ha = cookItInstance.runCookItButton();
-        if (ha >= 1 && leaveLoop == 0) {
-          leaveLoop = 1;
-          increment = 0;
-        }
-        delay(50);
-
-        wrong = plateItInstance.plateItNormal();
-        if (wrong == 2 && leaveLoop == 0) {
-          increment = 0;
-          leaveLoop = 1;
-        }
-        delay(50);
-
-        
+ 
         // Run chop it. The return value will be the current number of chops that have been done.
-        returnNumber = chopItInstance.runChopIt();
-        if (returnNumber >= requiredNumChops && leaveLoop == 0) {
+        returnChopIt = chopItInstance.runChopIt();
+        returnChopItPatty = plateItInstance.checkPattyChopIt();
+        if ((returnChopIt >= requiredNumChops) && (returnChopItPatty == true) && (leaveLoop == 0)) {
+          leaveLoop = 1;
           increment = 1;
+        }
+        delay(50);
+
+        // Read if the button has been pressed. Return 1 if there is a press, 0 otherwise.
+        returnCookIt = cookItInstance.runCookItButton();
+        returnCookItPatty = plateItInstance.checkPattyCookIt();
+        if (((returnCookIt != 0) || returnCookItPatty == true) && (leaveLoop == 0)) {
           leaveLoop = 1;
         }
-        
-        
+        delay(50);
+
+        // Read if there is a plate it action. Return 0 if no action. 
+        returnPlateIt = plateItInstance.plateItQuickCheck();
+        if ((returnPlateIt) != 0 && (leaveLoop == 0)) {
+          leaveLoop = 1;
+        }
         delay(50);
 
         // Measure the current time and determing if the user is taking too long to complete the action.
         endTime = millis();
         if ((endTime - startTime) >= timePerFunctionChopIt) {
-          increment = 0;
           leaveLoop = 1;
         }
-      }
-
-
-      // After exiting the while loop, determine which sound effect to play, depending
-      // on how the player performed previously.
-      if (increment != 0) {
-
-        mp3.playTrackNumber(mp3_sayGoodJob, 25);
-      } else {
-        mp3.playTrackNumber(mp3_sayYouSuck, 25);
       }
     }
 
@@ -295,7 +302,7 @@ void loop() {
     else if ((randNumber >= 20) && (randNumber < 40)) {
 
       mp3.playTrackNumber(mp3_callCookIt, 25);
-      delay(2000);
+      delay(1500);
 
 
       // First check for button input from the encoder. The program will leave this loop under 2 conditions:
@@ -304,30 +311,33 @@ void loop() {
       while (leaveLoop == 0) {
 
         // Run chop it. The return value will be the current number of chops that have been done.
-        returnNumber = chopItInstance.runChopIt();
-        if (returnNumber != 0 && (leaveLoop == 0)) {
-          increment = 0;
+        returnChopIt = chopItInstance.runChopIt();
+        returnChopItPatty = plateItInstance.checkPattyChopIt();
+        if (((returnChopIt != 0) || (returnChopItPatty == true)) && (leaveLoop == 0)) {
           leaveLoop = 1;
           skip = true;
         }
-
-        wrong = plateItInstance.plateItNormal();
-        if ((wrong == 2) && (leaveLoop == 0)) {
-          increment = 0;
-          leaveLoop = 1;
-          skip = true;
-        }
+        delay(50);
 
         // Read if the button has been pressed. Return 1 if there is a press, 0 otherwise.
-        ha = cookItInstance.runCookItButton();
-        if (ha >= 1 && (leaveLoop == 0)) {
+        returnCookIt = cookItInstance.runCookItButton();
+        returnCookItPatty = plateItInstance.checkPattyCookIt();
+        if ((returnCookIt != 0) && (returnCookItPatty) && (leaveLoop == 0)) {
           leaveLoop = 1;
         }
         delay(50);
+
+        returnPlateIt = plateItInstance.plateItQuickCheck();
+        if ((returnPlateIt != 0) && (leaveLoop == 0)) {
+          leaveLoop = 1;
+          skip = true;
+        }
+        delay(50);
+
+        
         // Measure the current time and determing if the user is taking too long to complete the action.
         endTime = millis();
         if ((endTime - startTime) >= timePerFunctionCookIt/1.5) {
-          increment = 0;
           leaveLoop = 1;
           tooLong = true;
         }
@@ -348,19 +358,9 @@ void loop() {
         // Measure the current time and determing if the user is taking too long to complete the action.
         endTime = millis();
         if ((endTime - startTime) >= timePerFunctionCookIt/1.5) {
-          increment = 0;
           leaveLoop = 1;
           tooLong = true;
         }
-      }
-
-
-      // After exiting the while loop, determine which sound effect to play,
-      // depending on how the player performed previously.
-      if (increment != 0) {
-        mp3.playTrackNumber(mp3_sayGoodJob, 25);
-      } else {
-        mp3.playTrackNumber(mp3_sayYouSuck, 25);
       }
     }
 
@@ -369,9 +369,9 @@ void loop() {
     else {
 
       mp3.playTrackNumber(mp3_callPlateIt, 25);
-      delay(2000);
+      delay(1500);
 
-      plateItInstance.generateNewBurger(burgerSize);
+      plateItInstance.generateNewBurgerSimplified();
 
       // Check for Plate-It input and time spent waiting for input. Exits if:
       // 1) The player has made 1 input on Plate-It (EX: place lettuce, remove burger, or ring bell)
@@ -380,49 +380,41 @@ void loop() {
         // Run plate it. The return number will be 1 if a general input has occured (EX: burger placed).
         // The return will be 2 if the bell has been rung. Otherwise the return will be 0.
 
-        returnNumber = chopItInstance.runChopIt();
-        if (returnNumber != 0 && leaveLoop == 0) {
-          increment = 0;
+        // Run chop it. The return value will be the current number of chops that have been done.
+        returnChopIt = chopItInstance.runChopIt();
+        returnChopItPatty = plateItInstance.checkPattyChopIt();
+        if (((returnChopIt != 0) || (returnChopItPatty == true)) && (leaveLoop == 0)) {
           leaveLoop = 1;
         }
+        delay(50);
 
-        ha = cookItInstance.runCookItButton();
-        if (ha >= 1 && leaveLoop == 0) {
-          increment = 0;
+        // Read if the button has been pressed. Return 1 if there is a press, 0 otherwise.
+        returnCookIt = cookItInstance.runCookItButton();
+        returnCookItPatty = plateItInstance.checkPattyCookIt();
+        if (((returnCookIt != 0) || returnCookItPatty == true) && (leaveLoop == 0)) {
           leaveLoop = 1;
         }
+        delay(50);
 
-        wrong = plateItInstance.plateItNormal();
-        if (wrong == 2 && leaveLoop == 0) {
-          increment = 1;
+        returnPlateIt = plateItInstance.plateItNormal();
+        if ((returnPlateIt) == 2 && (leaveLoop == 0)) {
           leaveLoop = 1;
         }
         delay(50);
 
         // Measure the current time and determing if the user is taking too long to complete the action.
         endTime = millis();
-        if ((endTime - startTime) >= timePerFunctionPlateIt) {
-          increment = 0;
+        if ((endTime - startTime) >= timePerFunctionPlateIt){
           leaveLoop = 1;
         }
       }
 
-      // After exiting the while loop, determine which sound effect to play,
-      // depending on how the player performed previously.
-      // INCORRECT INPUT
-      /*if (increment == 0) {
-        mp3.playTrackNumber(mp3_sayYouSuck, 25);
-      }*/
-
-      // REGULAR INGREDIENT PLACE
-      if (increment == 0) {
-        mp3.playTrackNumber(mp3_sayYouSuck, 25);
-      }
 
       // BELL RANG
-      else if (increment == 1) {
+      if (returnPlateIt == 2) {
         mp3.playTrackNumber(mp3_bell, 25);
-        delay(1000);
+        delay(750);
+        increment = plateItInstance.compareOrderToPlayer();
       }
 
       /*
@@ -462,7 +454,16 @@ void loop() {
         }
       }*/
     }
-    delay(1500);
+
+    // After exiting the while loop, determine which sound effect to play, depending
+    // on how the player performed previously.
+    if (increment != 0) {
+
+      mp3.playTrackNumber(mp3_sayGoodJob, 25);
+    } else {
+      mp3.playTrackNumber(mp3_sayYouSuck, 25);
+    }
+    delay(750);
 
 
     // Reset all of out classes.
@@ -512,7 +513,7 @@ void loop() {
     display.display();
 
     // Check if user is out of lives
-    if (misc.getLives() == 99){
+    if (misc.getLives() == 0){
       playGame = false;
       mp3.playTrackNumber(mp3_lose, 25);
       delay(3500);
