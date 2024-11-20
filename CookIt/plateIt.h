@@ -15,7 +15,7 @@
 #define lettuceID 4
 #define bottomBunID 5
 #define topBunID 6
-#define maxBurgerSize 7
+#define maxBurgerSize 4
 
 class PlateIt {
 private:
@@ -109,7 +109,7 @@ PlateIt::PlateIt(int plateItBottomBun, int plateItTopBun, int plateItBell, int n
 
   // Assign RGB values.
   BunRGB = strip_order.Color(255, 50, 0);
-  PattyRGB = strip_order.Color(255, 255, 255);
+  PattyRGB = strip_order.Color(255, 0, 0);
   LettuceRGB = strip_order.Color(30, 255, 0);
   OnionRGB = strip_order.Color(200, 0, 255);
   CheeseRGB = strip_order.Color(255, 200, 0);
@@ -129,8 +129,8 @@ PlateIt::PlateIt(int plateItBottomBun, int plateItTopBun, int plateItBell, int n
   Lettuce = 0;
   BottomBun = 0;
   TopBun = 0;
-  pattyChopIt = 0;
-  pattyCookIt = 0;
+  pattyChopIt = 1023;
+  pattyCookIt = 1023;
 
   // Initialize all counts to zero
   pattyCount = 0;
@@ -150,7 +150,7 @@ PlateIt::PlateIt(int plateItBottomBun, int plateItTopBun, int plateItBell, int n
   randNumber = 0;
 
   ing = 0;
-  len = 0;
+  len = maxBurgerSize;
 
   // Initialize player order to zero.
   for (int i = 0; i < maxBurgerSize; i++) {
@@ -371,34 +371,19 @@ bool PlateIt::checkPattyChopIt(){
   bool readInput = 0;
   // Patty Chop It
   pattyChopIt = analogRead(resPin1);
-  if (pattyChopIt < 800){
-    strip_player.setPixelColor(0, PattyRGB);
-    strip_player.show();
+  if ((pattyChopIt < 800)){
     readInput = 1;
   }
-  else{ 
-    strip_player.setPixelColor(0, BlankRGB);
-    strip_player.show();
-    readInput = 0;
-  }
-
 
   return readInput;
 }
 
 bool PlateIt::checkPattyCookIt(){
   bool readInput = 0;
-  // Patty Chop It
+  // Patty Cook It
   pattyCookIt = analogRead(resPin2);
-  if (pattyCookIt < 800){
-    strip_player.setPixelColor(0, PattyRGB);
-    strip_player.show();
+  if ((pattyCookIt < 800)){
     readInput = 1;
-  }
-  else{ 
-    strip_player.setPixelColor(0, BlankRGB);
-    strip_player.show();
-    readInput = 0;
   }
 
   return readInput;
@@ -622,7 +607,7 @@ bool PlateIt::checkLettuce() {
 bool PlateIt::checkBottomBun() {
   // BottomBun
   int readInput = 0;
-  BottomBun = digitalRead(bottomBunInput);
+  BottomBun = digitalRead(3);
   if (BottomBun == LOW && bottomBunCount == 0) {
     playerOrder[ing] = 5;
     strip_player.setPixelColor(ing, BunRGB);
@@ -649,7 +634,7 @@ bool PlateIt::checkBottomBun() {
 bool PlateIt::checkTopBun() {
   // TopBun
   int readInput = 0;
-  TopBun = digitalRead(topBunInput);
+  TopBun = digitalRead(4);
   if (TopBun == LOW && topBunCount == 0) {
     playerOrder[ing] = 6;
     strip_player.setPixelColor(ing, BunRGB);
@@ -674,7 +659,7 @@ bool PlateIt::checkTopBun() {
 bool PlateIt::checkBell() {
   // Bell
   int readInput = 0;
-  Bell = digitalRead(bellInput);
+  Bell = digitalRead(12);
   if (Bell == LOW) {
     readInput = 1;
   }

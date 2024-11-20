@@ -36,7 +36,7 @@ CookIt::CookIt(int cookItButton, int cookItEncoderDT, int cookItEncoderClk)
 {
   // Read the initial state of inputDT
   // Assign to previousStateDT variable
-  previousStateDT = digitalRead(cookItEncoderDT);
+  previousStateDT = digitalRead(7);
 
   numTurns = 0;
 
@@ -58,7 +58,7 @@ int CookIt::runCookItButton()
 {
   cookItButtonReturn = 0;
 
-  buttonVal = digitalRead(cookItButtonInput);
+  buttonVal = digitalRead(6);
   if(buttonVal == LOW){
     cookItButtonReturn = 1;
   }
@@ -73,7 +73,7 @@ int CookIt::runCookItEncoder()
 {
 
   // Read the current state of inputDT
-  currentStateDT = digitalRead(cookItEncoderDTInput);
+  currentStateDT = digitalRead(7);
 
   // If the previous and the current state of the inputDT are different then a pulse has occured
   if (currentStateDT != previousStateDT){ 
@@ -81,7 +81,7 @@ int CookIt::runCookItEncoder()
     
     // If the inputDT state is same as the inputCLK state then 
     // the encoder is rotating clockwise
-    if (digitalRead(cookItEncoderClkInput) == currentStateDT) { 
+    if (digitalRead(8) == currentStateDT) { 
       cookItEncoderReturn++;
     }
   } 
