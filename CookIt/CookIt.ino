@@ -275,6 +275,8 @@ void loop() {
       // Check for Chop-It input and time spent waiting for input.
       // Exits if either 1) the correct Chop-It input is recieved or
       // 2) The user takes too long to "Chop-It"
+      // If there is movement on one of the other inputs, or the user takes an excessive amount of time, 
+      // the loop will exit without setting increment to 1, signifying that there is an incorrect input.
       while (leaveLoop == 0) {
 
 
@@ -457,7 +459,6 @@ void loop() {
       misc.decreaseLives();
     }
 
-
     // Display score.
     totalScore = misc.getScore();
     display.clearDisplay();
@@ -485,7 +486,6 @@ void loop() {
       mp3.playTrackNumber(mp3_lose, 25);
       delay(3500);
     }
-
 
     // Decrease allowed time per function.
     if ((totalScore % 5 == 0) && (totalScore != 0) && (increment != 0)) {

@@ -13,7 +13,6 @@ class ChopIt
 
     ChopIt(int chopItInput);
     int runChopIt();
-
     void resetChopIt();
 };
 
