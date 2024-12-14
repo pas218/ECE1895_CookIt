@@ -1,2 +1,1 @@
-The main code is in ./CookIt
-The rest is just testing code
+The main code is in ./CookIt. The rest is just testing code.
