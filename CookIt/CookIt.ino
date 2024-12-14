@@ -112,7 +112,7 @@ unsigned long startTime = 0;
 unsigned long endTime = 0;
 unsigned long timePerFunctionChopIt = 15000;  // This is the amound of time in miliseconds that a player is allowed to take to complete an input.
 unsigned long timePerFunctionCookIt = 15000;
-unsigned long timePerFunctionPlateIt = 15000;
+unsigned long timePerFunctionPlateIt = 20000;
 unsigned long timePerFunctionDisassembleIt = 15000;
 bool tooLong = false;
 
@@ -492,9 +492,9 @@ void loop() {
       timePerFunctionChopIt = timePerFunctionChopIt - 75;
       timePerFunctionCookIt = timePerFunctionCookIt - 75;
       timePerFunctionPlateIt = timePerFunctionPlateIt - 75;
-      timePerFunctionDisassembleIt = timePerFunctionDisassembleIt - 75;
-      mp3.playTrackNumber(mp3_faster, 25);
-      delay(1500);
+      //delay(50);
+      //mp3.playTrackNumber(mp3_faster, 15);
+      //delay(1750);
     }
   }
   //// END GAME WHILE LOOP //

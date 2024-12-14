@@ -421,7 +421,7 @@ int PlateIt::compareOrderToPlayer(){
 
   orderCorrect = 1;
 
-  for (int i = 0; i < len; i++){
+  for (int i = 0; i < len-1; i++){
     if (order[i] != playerOrder[i]){
       orderCorrect = 0;
       break;
